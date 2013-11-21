@@ -1,0 +1,19 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Db
+Bundle-SymbolicName: org.eclipse.emf.db;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: org.eclipse.emf.db.Activator
+Bundle-Vendor: Christophe Moine
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ org.eclipse.emf.ecore,
+ com.mysql.jdbc
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ActivationPolicy: lazy
+Export-Package: org.eclipse.emf.db,
+ org.eclipse.emf.db.criteria,
+ org.eclipse.emf.db.util,
+ org.eclipse.emf.internal.db
+Bundle-ClassPath: .,
+ lib/commons-lang3-3.0.1.jar

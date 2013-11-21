@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.emf.importer.modelImporterDescriptors">
+      <modelImporterDescriptor
+            icon="icons/db.png"
+            id="com.cmoine.emf.importer.db"
+            name="Relational Database"
+            wizard="com.cmoine.emf.importer.db.ui.DBModelImporterWizard">
+      </modelImporterDescriptor>
+   </extension>
+
+</plugin>

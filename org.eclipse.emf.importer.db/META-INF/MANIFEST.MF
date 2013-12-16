@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Db
 Bundle-SymbolicName: com.cmoine.emf.importer.db;singleton:=true
 Bundle-Version: 1.0.0.qualifier
-Bundle-Activator: com.cmoine.emf.importer.db.Activator
+Bundle-Activator: org.eclipse.emf.importer.db.Activator
 Bundle-Vendor: CMOINE
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,

@@ -7,7 +7,7 @@
             icon="icons/db.png"
             id="com.cmoine.emf.importer.db"
             name="Relational Database"
-            wizard="com.cmoine.emf.importer.db.ui.DBModelImporterWizard">
+            wizard="org.eclipse.emf.importer.db.ui.DBModelImporterWizard">
       </modelImporterDescriptor>
    </extension>
 

@@ -1,4 +1,4 @@
-package com.cmoine.emf.importer.db.ui;
+package org.eclipse.emf.importer.db.ui;
 import org.eclipse.emf.importer.ModelImporter;
 import org.eclipse.emf.importer.ui.contribution.base.ModelImporterPackagePage;
 

@@ -1,4 +1,4 @@
-package com.cmoine.emf.importer.db.ui;
+package org.eclipse.emf.importer.db.ui;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -17,6 +17,7 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.importer.ModelImporter;
+import org.eclipse.emf.importer.db.Activator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -25,8 +26,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
-
-import com.cmoine.emf.importer.db.Activator;
 
 public class DBDetailPage extends ModelConverterPage {
 	private Text url;
@@ -82,7 +81,7 @@ public class DBDetailPage extends ModelConverterPage {
 			String prefix=StringUtils.substringAfterLast(url.getText(), "/"); //$NON-NLS-1$
 			ePackage.setName(prefix);
 			ePackage.setNsPrefix(prefix);
-			ePackage.setNsURI("http://www.cmoine.com/" + prefix + "/1.0.0"); //$NON-NLS-1$ //$NON-NLS-2$
+            ePackage.setNsURI("http://www.eclipse.org/" + prefix + "/1.0.0"); //$NON-NLS-1$ //$NON-NLS-2$
 			getModelConverter().getEPackages().add(ePackage);
 			for (String[] tableName : list(con, "show full tables where Table_type!='VIEW';", 1)) { //$NON-NLS-1$
 				EClass eClass=EcoreFactory.eINSTANCE.createEClass();

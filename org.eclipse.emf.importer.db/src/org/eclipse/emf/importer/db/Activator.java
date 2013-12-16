@@ -1,4 +1,4 @@
-package com.cmoine.emf.importer.db;
+package org.eclipse.emf.importer.db;
 
 import org.eclipse.core.runtime.Status;
 import org.eclipse.ui.plugin.AbstractUIPlugin;

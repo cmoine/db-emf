@@ -12,7 +12,7 @@ public class DBModelImporter extends ModelImporter {
 
 	@Override
 	public String getID() {
-		return "com.cmoine.emf.importer.db"; //$NON-NLS-1$
+        return "org.eclipse.emf.importer.db"; //$NON-NLS-1$
 	}
 
 	@Override

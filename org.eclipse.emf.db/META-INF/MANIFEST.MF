@@ -11,9 +11,9 @@ Require-Bundle: org.eclipse.ui,
  com.mysql.jdbc
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
-Export-Package: org.eclipse.emf.db,
- org.eclipse.emf.db.criteria,
- org.eclipse.emf.db.util,
- org.eclipse.emf.internal.db
+Export-Package: org.eclipse.emf.cdo.server.internal.db;x-internal:=true,
+ org.eclipse.emf.db,
+ org.eclipse.emf.db.impl;x-friends:="com.robotikdose.tests",
+ org.eclipse.emf.db.util
 Bundle-ClassPath: .,
- lib/commons-lang3-3.0.1.jar
+ lib/guava-14.0.1.jar

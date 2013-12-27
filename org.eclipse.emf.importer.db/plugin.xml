@@ -5,8 +5,8 @@
          point="org.eclipse.emf.importer.modelImporterDescriptors">
       <modelImporterDescriptor
             icon="icons/db.png"
-            id="com.cmoine.emf.importer.db"
-            name="Relational Database"
+            id="org.eclipse.emf.importer.db"
+            name="DB-EMF"
             wizard="org.eclipse.emf.importer.db.ui.DBModelImporterWizard">
       </modelImporterDescriptor>
    </extension>

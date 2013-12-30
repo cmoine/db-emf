@@ -83,6 +83,7 @@ public final class DBUtil {
 
     public static void clearObjectCache() {
         objects.invalidateAll();
+        resources=null;
     }
 
     private static ThreadLocal<Boolean> canSave=new ThreadLocal<Boolean>() {
@@ -353,26 +354,10 @@ public final class DBUtil {
             } else {
                 return Collections.emptyList();
             }
-            // } catch (SQLException e) {
-            //            Activator.log(IStatus.ERROR, "Failed to query", e); //$NON-NLS-1$
         } finally {
             stmt.close();
         }
-        // return null;
     }
-
-    // public static <T extends DBObject> List<T> queryAll(long containerID, Class<T> clazz, String columnName) throws SQLException {
-    // try (Statement stmt=ModelActivator.getConnection().createStatement()) {
-    // ResultSet rSet=stmt.executeQuery("SELECT * FROM " + QueryUtil.getTableName(clazz) + " WHERE " + columnName + '=' + containerID);
-    // List<T> result=new BasicEList<>(rSet.getFetchSize());
-    // while (rSet.next()) {
-    // T obj2=(T) ModelFactory.eINSTANCE.create(ModelUtil.ECLASSES.get(clazz));
-    // fetch(rSet, obj2);
-    // result.add(obj2);
-    // }
-    // return result;
-    // }
-    // }
 
     public static <T extends DBObject> T query(Connection connection, long cdoID, Class<T> c, EPackage pkg) throws SQLException {
         if (cdoID < 1) {
@@ -394,35 +379,12 @@ public final class DBUtil {
     }
 
     private static long key(EClass clazz, long cdoid) {
-        // ORI return ((long) clazz.getClassifierID() << 32) | cdoid & 0xFFFFFFFF;
         return ((long) clazz.getClassifierID() & 0xFFF) | cdoid << 12;
-        // return (((long) (clazz.getClassifierID() & 0xFFF)) << 44) | cdoid & 0xFFFFFFFFFFFl;
     }
 
     private static DBObject getObjectFromCache(Connection connection, EClass eClass, long cdoId) throws SQLException {
         long key=key(eClass, cdoId);
         DBObject result=objects.getIfPresent(key);
-         // TODO QLE - DEBUG
-        // if (result != null) {
-        // Statement stmt=connection.createStatement();
-        // ResultSet rSet=stmt.executeQuery("SELECT " + CDODBSchema.ATTRIBUTES_CREATED + " FROM " + DBQueryUtil.getTableName(eClass) + " WHERE "
-        // + CDODBSchema.ATTRIBUTES_ID + '=' + cdoId);
-        // try {
-        // if (rSet.next()) {
-        // long dbRevised=rSet.getLong(1);
-        // if (dbRevised != result.cdoRevision()) {
-        // System.err.println(eClass.getName() + " - cdoId " + cdoId);
-        // System.err.println(eClass.getName() + " - cdoRevised from Cache " + result.cdoRevision());
-        // System.err.println(eClass.getName() + " - cdoRevised from Cache " + dbRevised);
-        // System.err.println("FORCE RELOAD !! => " + eClass.getName() + " " + cdoId);
-        // reload(connection, result);
-        // }
-        // }
-        // } finally {
-        // rSet.close();
-        // stmt.close();
-        // }
-        // }
         return result;
     }
 
@@ -433,16 +395,13 @@ public final class DBUtil {
 
     private static BiMap<Long, String> getResources(Connection con) throws SQLException {
         if (resources == null) {
-            // ImmutableMap.Builder<Long, String> builder=new ImmutableMap.Builder<>();
             resources=HashBiMap.create();
             Statement stmt=con.createStatement();
             try {
                 ResultSet rSet=stmt.executeQuery("SELECT " + CDODBSchema.ATTRIBUTES_ID + ",name FROM cdoresource");
                 while (rSet.next()) {
                     resources.put(rSet.getLong(1), Strings.nullToEmpty(rSet.getString(2)));
-                    // builder.put(rSet.getLong(1), StringUtils.defaultString(rSet.getString(2)));
                 }
-                // resources=builder.build();
             } finally {
                 stmt.close();
             }
@@ -464,10 +423,6 @@ public final class DBUtil {
         } finally {
             stmt.close();
         }
-    }
-
-    private static void fetch(ResultSet rSet, DBObject obj) throws SQLException {
-        fetch(rSet, obj, null);
     }
 
     private static Map<String, Integer> fetch(ResultSet rSet, DBObject obj, Map<String, Integer> mapping) throws SQLException {

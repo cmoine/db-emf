@@ -52,10 +52,6 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
         cdoID=val;
     }
 
-    // public int cdoInternalClass() {
-    // return eClass().getName().hashCode();
-    // }
-
     @Override
     public final boolean equals(Object obj) {
         return super.equals(obj);
@@ -225,24 +221,25 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
         if (eFeature instanceof EReference) {
             EReference reference=((EReference) eFeature);
             EReference opposite=reference.getEOpposite();
-            if (opposite != null && opposite.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
-                if (newValue == null) {
-                    // TODO QLE - DEBUG
-                    
-                    // TODO CME => // FIXME This code looks out of date
-                    // ori - ((List<DBObject>) ((EObject) oldValue).eGet(opposite)).remove(this);
-                    if (oldValue != null) {
-                        try {
-                            ((List<DBObject>) query(this, reference).eGet(opposite)).remove(this);
-                        } catch (SQLException e) {
-                            System.err.println("ERREUR critique !! " + e.getMessage());
-                            e.printStackTrace();
-                        }
+            if (opposite != null) {
+                if (opposite.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
+                    if (newValue == null) {
+                        DBObjectImpl obj=(DBObjectImpl) eGet(reference);
+                        if (obj != null)
+                            ((List<?>) obj.eGet(opposite)).remove(this);
+                    } else {
+                        List<Object> list=((List<Object>) ((EObject) newValue).eGet(opposite));
+                        if (!list.contains(this))
+                            list.add(this);
                     }
                 } else {
-                    List<DBObject> list=((List<DBObject>) ((EObject) newValue).eGet(opposite));
-                    if (!list.contains(this))
-                        list.add(this);
+                    if (newValue == null) {
+                        DBObjectImpl obj=(DBObjectImpl) eGet(reference);
+                        if (obj != null)
+                            obj.internalESet(opposite, null);
+                    } else {
+                        ((DBObjectImpl) newValue).internalESet(opposite, this);
+                    }
                 }
             }
         }

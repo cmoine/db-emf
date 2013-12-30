@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="org" nsURI="http://tests1/1.0" nsPrefix="tests1">
+  <eSubpackages name="eclipse" nsURI="http://tests2/1.0" nsPrefix="tests2">
+    <eSubpackages name="emf" nsURI="http://tests3/1.0" nsPrefix="tests3">
+      <eSubpackages name="db" nsURI="http://tests4/1.0" nsPrefix="tests4">
+        <eSubpackages name="tests" nsURI="http://tests5/1.0" nsPrefix="tests5">
+          <eSubpackages name="model" nsURI="http://tests/1.0" nsPrefix="tests">
+            <eClassifiers xsi:type="ecore:EClass" name="Root">
+              <eStructuralFeatures xsi:type="ecore:EReference" name="children" upperBound="-1"
+                  eType="#//eclipse/emf/db/tests/model/Child" containment="true" eOpposite="#//eclipse/emf/db/tests/model/Child/root"/>
+              <eStructuralFeatures xsi:type="ecore:EReference" name="subRoot" eType="#//eclipse/emf/db/tests/model/SubRoot"
+                  containment="true" eOpposite="#//eclipse/emf/db/tests/model/SubRoot/root"/>
+              <eStructuralFeatures xsi:type="ecore:EAttribute" name="labels" upperBound="-1"
+                  eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+            </eClassifiers>
+            <eClassifiers xsi:type="ecore:EClass" name="Child">
+              <eStructuralFeatures xsi:type="ecore:EReference" name="root" eType="#//eclipse/emf/db/tests/model/Root"
+                  eOpposite="#//eclipse/emf/db/tests/model/Root/children"/>
+            </eClassifiers>
+            <eClassifiers xsi:type="ecore:EClass" name="SubRoot">
+              <eStructuralFeatures xsi:type="ecore:EReference" name="root" eType="#//eclipse/emf/db/tests/model/Root"
+                  eOpposite="#//eclipse/emf/db/tests/model/Root/subRoot"/>
+            </eClassifiers>
+          </eSubpackages>
+        </eSubpackages>
+      </eSubpackages>
+    </eSubpackages>
+  </eSubpackages>
+</ecore:EPackage>

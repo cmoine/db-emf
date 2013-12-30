@@ -33,7 +33,6 @@ import org.eclipse.emf.db.RemoteException;
 import org.eclipse.emf.db.impl.DBObjectImpl;
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EEnum;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
@@ -104,21 +103,24 @@ public final class DBUtil {
     }
 
     public static void diagnose(EPackage pkg) {
-        for (EClassifier classifier : pkg.getEClassifiers()) {
-            if (classifier instanceof EClass) {
-                EClass clazz=(EClass) classifier;
-                for (EReference ref : clazz.getEReferences()) {
-                    // 0..* relation to abstract is not allowed
-                    if (ref.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
-                        if (ref.getEType() instanceof EClass) {
-                            EClass type=(EClass) ref.getEType();
-                            if (type.isAbstract())
-                                throw new UnsupportedOperationException("Multiple relation to abstract class is not supported for performance issues: " + ref);
-                        }
+        for (EClass clazz : DBModelInformationCache.getConcreteClasses(pkg)) {
+            for (EReference ref : clazz.getEAllReferences()) {
+                // 0..* relation to abstract is not allowed
+                if (ref.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
+                    if (ref.getEType() instanceof EClass) {
+                        EClass type=(EClass) ref.getEType();
+                        if (type.isAbstract())
+                            throw new UnsupportedOperationException("Multiple relation to abstract class is not supported for performance issues: " + ref);
                     }
-                    // Check the reference without caring about the result
-                    DBModelInformationCache.hasInheritance(ref);
                 }
+                // Check that 0..1 - 0..1 has at least one containment reference
+                if (ref.getUpperBound() == 1 && ref.getEOpposite() != null && ref.getEOpposite().getUpperBound() == 1) {
+                    if ((!ref.isContainment()) && (!ref.getEOpposite().isContainment())) {
+                        throw new UnsupportedOperationException("0..1 - 0..1 relation must have at least one containment reference: " + ref);
+                    }
+                }
+                // Check the reference without caring about the result
+                DBModelInformationCache.hasInheritance(ref);
             }
         }
     }

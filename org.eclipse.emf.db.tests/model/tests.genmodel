@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" modelDirectory="/org.eclipse.emf.db.tests/src" modelPluginID="org.eclipse.emf.db.tests"
+    modelName="Tests" rootExtendsInterface="org.eclipse.emf.db.DBObject" rootExtendsClass="org.eclipse.emf.db.impl.DBObjectImpl"
+    reflectiveDelegation="true" importerID="org.eclipse.emf.importer.db" featureDelegation="Reflective"
+    complianceLevel="6.0" copyrightFields="false" operationReflection="true" importOrganizing="true">
+  <genPackages prefix="Org" disposableProviderFactory="true" ecorePackage="tests.ecore#/">
+    <nestedGenPackages prefix="Eclipse" disposableProviderFactory="true" ecorePackage="tests.ecore#//eclipse">
+      <nestedGenPackages prefix="Emf" disposableProviderFactory="true" ecorePackage="tests.ecore#//eclipse/emf">
+        <nestedGenPackages prefix="Db" disposableProviderFactory="true" ecorePackage="tests.ecore#//eclipse/emf/db">
+          <nestedGenPackages prefix="Tests" disposableProviderFactory="true" ecorePackage="tests.ecore#//eclipse/emf/db/tests">
+            <nestedGenPackages prefix="Model" disposableProviderFactory="true" ecorePackage="tests.ecore#//eclipse/emf/db/tests/model">
+              <genClasses ecoreClass="tests.ecore#//eclipse/emf/db/tests/model/Root">
+                <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference tests.ecore#//eclipse/emf/db/tests/model/Root/children"/>
+                <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference tests.ecore#//eclipse/emf/db/tests/model/Root/subRoot"/>
+                <genFeatures createChild="false" ecoreFeature="ecore:EAttribute tests.ecore#//eclipse/emf/db/tests/model/Root/labels"/>
+              </genClasses>
+              <genClasses ecoreClass="tests.ecore#//eclipse/emf/db/tests/model/Child">
+                <genFeatures property="None" notify="false" createChild="false" ecoreFeature="ecore:EReference tests.ecore#//eclipse/emf/db/tests/model/Child/root"/>
+              </genClasses>
+              <genClasses ecoreClass="tests.ecore#//eclipse/emf/db/tests/model/SubRoot">
+                <genFeatures property="None" notify="false" createChild="false" ecoreFeature="ecore:EReference tests.ecore#//eclipse/emf/db/tests/model/SubRoot/root"/>
+              </genClasses>
+            </nestedGenPackages>
+          </nestedGenPackages>
+        </nestedGenPackages>
+      </nestedGenPackages>
+    </nestedGenPackages>
+  </genPackages>
+</genmodel:GenModel>

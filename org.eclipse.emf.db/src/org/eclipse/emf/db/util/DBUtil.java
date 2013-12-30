@@ -122,6 +122,13 @@ public final class DBUtil {
                 // Check the reference without caring about the result
                 DBModelInformationCache.hasInheritance(ref);
             }
+            // Check upper bounds
+            for (EStructuralFeature feature : clazz.getEAllStructuralFeatures()) {
+                if (feature.getLowerBound() != 0 && feature.getLowerBound() != 1)
+                    throw new UnsupportedOperationException("Lower bound *must* be equals to zero or 1 " + feature);
+                if (feature.getUpperBound() != 1 && feature.getUpperBound() != ETypedElement.UNBOUNDED_MULTIPLICITY)
+                    throw new UnsupportedOperationException("Upper bound *must* be equals to 1 or 'EStructuralFeature.UNBOUNDED_MULTIPLICITY' " + feature);
+            }
         }
     }
 
@@ -474,10 +481,6 @@ public final class DBUtil {
         ((DBObjectImpl) obj).setRevision(rSet.getLong(CDODBSchema.ATTRIBUTES_CREATED));
         ((DBObjectImpl) obj).setConnection(rSet.getStatement().getConnection());
 
-        // rSet.getMetaData().get
-        // if (mapping == null)
-        // mapping=new HashMap<>();
-
         // Copy Attributes
         for (EAttribute att : obj.eClass().getEAllAttributes()) {
             if (att.getUpperBound() != ETypedElement.UNBOUNDED_MULTIPLICITY) {
@@ -531,7 +534,7 @@ public final class DBUtil {
         }
         // Copy EReferences
         for (EReference ref : obj.eClass().getEAllReferences()) {
-            if (ref.getUpperBound() != ETypedElement.UNBOUNDED_MULTIPLICITY) {
+            if (ref.getUpperBound() == 1 && !ref.isContainment()) {
                 // 0..1
                 String column=DBQueryUtil.getColumnName(ref);
                 Integer columnIndex;
@@ -547,8 +550,6 @@ public final class DBUtil {
                 Long cdoId=rSet.getLong(columnIndex);
                 if (cdoId == 0L)
                     cdoId=null;
-                // if (ref.equals(eINSTANCE.getParametrable_Parametre()) && obj.eClass().equals(eINSTANCE.getEtablissement()))
-                // System.out.println("DBUtil.fetch()");
 
                 ((DBObjectImpl) obj).map().put(ref, cdoId);
             }

@@ -98,11 +98,7 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
                 if (eFeature.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
                     Object value=map().get(eFeature);
                     if (value == null) {
-                        if (((EReference) eFeature).isContainment()) {
-                            value=queryAll(this, ((EReference) eFeature), CDODBSchema.ATTRIBUTES_CONTAINER);
-                        } else {
-                            value=queryAll(this, ((EReference) eFeature), DBQueryUtil.getColumnName(((EReference) eFeature).getEOpposite()));
-                        }
+                        value=queryAll(this, ((EReference) eFeature), eFeature);
                         value=new DBList((EReference) eFeature, this, (List<DBObject>) value);
                         internalESet(eFeature, value);
                     }
@@ -125,7 +121,14 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
                                                 .getEPackage()));
                             }
                         }
+                    } else if (value == null && ((EReference) eFeature).isContainment() && ((EReference) eFeature).getEOpposite() != null) {
+                        DBList values=queryAll(this, ((EReference) eFeature), eFeature);
+                        if (values.size() > 1)
+                            throw new RemoteException("Found multiple values (instead of 1) for " + ((EReference) eFeature).getEOpposite());
+
+                        internalESet(eFeature, value=(values.isEmpty() ? null : values.get(0)));
                     }
+
                     return value;
                 }
             } else {
@@ -168,7 +171,9 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
         return DBUtil.query(connection, cdoID, (Class<T>) eClass.getInstanceClass(), eClass().getEPackage());
     }
 
-    private DBList queryAll(DBObject dbObject, EReference reference, String columnName) throws SQLException {
+    private DBList queryAll(DBObject dbObject, EReference reference, EStructuralFeature eFeature) throws SQLException {
+        String columnName=((EReference) eFeature).isContainment() ? CDODBSchema.ATTRIBUTES_CONTAINER : DBQueryUtil.getColumnName(((EReference) eFeature)
+                .getEOpposite());
         if (dbObject.cdoID() == -1) {
             return new DBList(reference, dbObject);
         }

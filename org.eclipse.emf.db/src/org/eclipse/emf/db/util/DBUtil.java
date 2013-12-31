@@ -53,6 +53,7 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.io.BaseEncoding;
 
 public final class DBUtil {
     private static final SimpleDateFormat MYSQL_DATE_FORMAT=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); //$NON-NLS-1$
@@ -691,6 +692,8 @@ public final class DBUtil {
                     value=((Enumerator) value).getValue();
                 else if (att.getEType().equals(EcorePackage.eINSTANCE.getEDate()))
                     value=value == null ? null : DBQueryUtil.quote(MYSQL_DATE_FORMAT.format((java.util.Date) value));
+                else if (att.getEType().equals(EcorePackage.eINSTANCE.getEByteArray()))
+                    value=value == null ? null : "x'" + BaseEncoding.base32Hex().encode((byte[]) value) + '\''; //$NON-NLS-1$
 
                 values.setProperty(DBQueryUtil.getColumnName(att), Objects.toString(value));
             }

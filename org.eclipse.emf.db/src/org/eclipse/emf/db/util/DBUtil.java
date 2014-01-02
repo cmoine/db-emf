@@ -693,7 +693,7 @@ public final class DBUtil {
                 else if (att.getEType().equals(EcorePackage.eINSTANCE.getEDate()))
                     value=value == null ? null : DBQueryUtil.quote(MYSQL_DATE_FORMAT.format((java.util.Date) value));
                 else if (att.getEType().equals(EcorePackage.eINSTANCE.getEByteArray()))
-                    value=value == null ? null : "x'" + BaseEncoding.base32Hex().encode((byte[]) value) + '\''; //$NON-NLS-1$
+                    value=value == null ? null : "FROM_BASE64('" + BaseEncoding.base64().encode((byte[]) value) + "')"; //$NON-NLS-1$
 
                 values.setProperty(DBQueryUtil.getColumnName(att), Objects.toString(value));
             }

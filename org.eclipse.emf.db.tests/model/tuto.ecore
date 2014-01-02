@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="tuto" nsURI="http://tuto/1.0" nsPrefix="tuto">
+  <eSubpackages name="Simple">
+    <eClassifiers xsi:type="ecore:EClass" name="A">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="reference" eType="#//Simple/B"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="B"/>
+    <eClassifiers xsi:type="ecore:EClass" name="C">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="references" upperBound="-1"
+          eType="#//Simple/D"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="D"/>
+  </eSubpackages>
+  <eSubpackages name="Opposite">
+    <eClassifiers xsi:type="ecore:EClass" name="A">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="reference" eType="#//Opposite/B"
+          eOpposite="#//Opposite/B/opposite"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="B">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="opposite" eType="#//Opposite/A"
+          eOpposite="#//Opposite/A/reference"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="D">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="opposite" eType="#//Opposite/C"
+          eOpposite="#//Opposite/C/references"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="C">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="references" upperBound="-1"
+          eType="#//Opposite/D" eOpposite="#//Opposite/D/opposite"/>
+    </eClassifiers>
+  </eSubpackages>
+  <eSubpackages name="Containment">
+    <eClassifiers xsi:type="ecore:EClass" name="A">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="reference" eType="#//Containment/B"
+          containment="true"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="B"/>
+    <eClassifiers xsi:type="ecore:EClass" name="E">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="reference" upperBound="-1"
+          eType="#//Containment/F" containment="true"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="F"/>
+    <eClassifiers xsi:type="ecore:EClass" name="D">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="opposite" eType="#//Containment/C"
+          eOpposite="#//Containment/C/reference"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="C">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="reference" eType="#//Containment/D"
+          containment="true" eOpposite="#//Containment/D/opposite"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="H">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="opposite" eType="#//Containment/G"
+          eOpposite="#//Containment/G/reference"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="G">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="reference" upperBound="-1"
+          eType="#//Containment/H" containment="true" eOpposite="#//Containment/H/opposite"/>
+    </eClassifiers>
+  </eSubpackages>
+  <eSubpackages name="MultipleDecomposition">
+    <eClassifiers xsi:type="ecore:EClass" name="User">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="groups" upperBound="-1"
+          eType="#//MultipleDecomposition/Group" eOpposite="#//MultipleDecomposition/Group/users"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="Group">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="users" upperBound="-1"
+          eType="#//MultipleDecomposition/User" eOpposite="#//MultipleDecomposition/User/groups"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="User">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="userGroup" upperBound="-1"
+          eType="#//MultipleDecomposition/UserGroup" eOpposite="#//MultipleDecomposition/UserGroup/user"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="UserGroup">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="user" eType="#//MultipleDecomposition/User.1"
+          eOpposite="#//MultipleDecomposition/User.1/userGroup"/>
+      <eStructuralFeatures xsi:type="ecore:EReference" name="group" eType="#//MultipleDecomposition/Group.1"
+          eOpposite="#//MultipleDecomposition/Group.1/userGroup"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="Group">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="userGroup" upperBound="-1"
+          eType="#//MultipleDecomposition/UserGroup" eOpposite="#//MultipleDecomposition/UserGroup/group"/>
+    </eClassifiers>
+  </eSubpackages>
+</ecore:EPackage>

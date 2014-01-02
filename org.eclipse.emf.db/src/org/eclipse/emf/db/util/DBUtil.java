@@ -27,7 +27,6 @@ import org.eclipse.emf.cdo.server.internal.db.CDODBSchema;
 import org.eclipse.emf.cdo.server.internal.db.DBAnnotation;
 import org.eclipse.emf.common.util.Enumerator;
 import org.eclipse.emf.db.Activator;
-import org.eclipse.emf.db.DBModelInformationCache;
 import org.eclipse.emf.db.DBObject;
 import org.eclipse.emf.db.RemoteException;
 import org.eclipse.emf.db.impl.DBObjectImpl;
@@ -126,32 +125,43 @@ public final class DBUtil {
 
     public static void diagnose(EPackage pkg) {
         for (EClass clazz : DBModelInformationCache.getConcreteClasses(pkg)) {
-            for (EReference ref : clazz.getEAllReferences()) {
-                // 0..* relation to abstract is not allowed
-                if (ref.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
-                    if (ref.getEType() instanceof EClass) {
-                        EClass type=(EClass) ref.getEType();
-                        if (type.isAbstract())
-                            throw new UnsupportedOperationException("Multiple relation to abstract class is not supported for performance issues: " + ref);
-                    }
-                }
-                // Check that 0..1 - 0..1 has at least one containment reference
-                if (ref.getUpperBound() == 1 && ref.getEOpposite() != null && ref.getEOpposite().getUpperBound() == 1) {
-                    if ((!ref.isContainment()) && (!ref.getEOpposite().isContainment())) {
-                        throw new UnsupportedOperationException("0..1 - 0..1 relation must have at least one containment reference: " + ref);
-                    }
-                }
-                // Check the reference without caring about the result
-                DBModelInformationCache.hasInheritance(ref);
-            }
             // Check upper bounds
             for (EStructuralFeature feature : clazz.getEAllStructuralFeatures()) {
                 if (feature.getLowerBound() != 0 && feature.getLowerBound() != 1)
                     throw new UnsupportedOperationException("Lower bound *must* be equals to zero or 1 " + feature);
                 if (feature.getUpperBound() != 1 && feature.getUpperBound() != ETypedElement.UNBOUNDED_MULTIPLICITY)
                     throw new UnsupportedOperationException("Upper bound *must* be equals to 1 or 'EStructuralFeature.UNBOUNDED_MULTIPLICITY' " + feature);
+
+                // Additionnal checks on EReferences
+                if (feature instanceof EReference) {
+                    EReference ref=(EReference) feature;
+                    // 0..* relation to abstract is not allowed
+                    if (ref.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
+                        if (ref.getEOpposite() == null || ref.getEOpposite().getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY)
+                            throw new UnsupportedOperationException("Multiple relation must have a 0..1 EOpposite: " + toString(ref));
+
+                        if (ref.getEType() instanceof EClass) {
+                            EClass type=(EClass) ref.getEType();
+                            if (type.isAbstract())
+                                throw new UnsupportedOperationException("Multiple relation to abstract class is not supported for performance issues: "
+                                        + toString(ref));
+                        }
+                    }
+                    // Check that 0..1 - 0..1 has at least one containment reference
+                    if (ref.getUpperBound() == 1 && ref.getEOpposite() != null && ref.getEOpposite().getUpperBound() == 1) {
+                        if ((!ref.isContainment()) && (!ref.getEOpposite().isContainment())) {
+                            throw new UnsupportedOperationException("0..1 - 0..1 relation must have at least one containment reference: " + toString(ref));
+                        }
+                    }
+                    // Check the reference without caring about the result
+                    DBModelInformationCache.hasInheritance(ref);
+                }
             }
         }
+    }
+
+    /* package */static String toString(EReference ref) {
+        return ref.getEContainingClass().getName() + " -> " + ref.getName() + " -> " + ref.getEType().getName();
     }
 
     public static void createOrUpdateDBStructure(Connection connection, EPackage pkg) throws SQLException {
@@ -664,6 +674,8 @@ public final class DBUtil {
                     }
                 });
             }
+            ((DBObjectImpl) obj).setModified(false);
+            ((DBObjectImpl) obj).clearDetached();
         } finally {
             stmt.close();
             if (props != null)

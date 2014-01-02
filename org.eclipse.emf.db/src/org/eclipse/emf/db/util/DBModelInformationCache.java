@@ -1,4 +1,4 @@
-package org.eclipse.emf.db;
+package org.eclipse.emf.db.util;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.emf.db.DBObject;
 import org.eclipse.emf.ecore.EAnnotation;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EClassifier;
@@ -67,8 +68,7 @@ public final class DBModelInformationCache {
         if (ref.getEType() != null && ((EClass) ref.getEType()).isAbstract()) {
             EAnnotation annotation=ref.getEAnnotation("http://www.eclipse.org/DB-EMF");
             Assert.isTrue(annotation != null && Boolean.parseBoolean(annotation.getDetails().get("inheritance")), //
-                    "You must annotate for an abstract type (" + ref.getEContainingClass().getName() + " -> " + ref.getName() + " -> "
-                            + ref.getEType().getName() + ')');
+                    "You must annotate for an abstract type (" + DBUtil.toString(ref) + ')');
             return true;
         } else {
             EAnnotation annotation=ref.getEAnnotation("http://www.eclipse.org/DB-EMF");

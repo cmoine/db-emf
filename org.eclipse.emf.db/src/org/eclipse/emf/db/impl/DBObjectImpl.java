@@ -4,16 +4,17 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import org.eclipse.emf.cdo.server.internal.db.CDODBSchema;
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.util.BasicEList;
-import org.eclipse.emf.db.DBModelInformationCache;
 import org.eclipse.emf.db.DBObject;
 import org.eclipse.emf.db.RemoteException;
-import org.eclipse.emf.db.util.DBList;
+import org.eclipse.emf.db.util.DBModelInformationCache;
 import org.eclipse.emf.db.util.DBQueryUtil;
 import org.eclipse.emf.db.util.DBUtil;
 import org.eclipse.emf.ecore.EAttribute;
@@ -25,17 +26,22 @@ import org.eclipse.emf.ecore.ETypedElement;
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
 import org.eclipse.emf.ecore.impl.EObjectImpl;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 
 public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
     private long cdoID=-1;
     private Connection connection;
     private String cdoResource;
     private long cdoRevision=0;
-    private final Map<EStructuralFeature, Object> map=Maps.newHashMap();
+    private final Map<EStructuralFeature, Object> map;
+    private Multimap<EReference, DBObject> detached;
     private final EReference containmentRef;
+    private boolean modified;
 
     protected DBObjectImpl() {
+        map=Maps.newHashMapWithExpectedSize(eClass().getEAllStructuralFeatures().size());
         containmentRef=DBModelInformationCache.getContainerReference(eClass());
         // FIXME Workaround set default values to prevent NPE :(
         for (EAttribute att : eClass().getEAllAttributes()) {
@@ -98,7 +104,7 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
                 if (eFeature.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
                     Object value=map().get(eFeature);
                     if (value == null) {
-                        value=queryAll(this, ((EReference) eFeature), eFeature);
+                        value=queryAll(((EReference) eFeature), eFeature);
                         value=new DBList((EReference) eFeature, this, (List<DBObject>) value);
                         internalESet(eFeature, value);
                     }
@@ -122,7 +128,7 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
                             }
                         }
                     } else if (value == null && ((EReference) eFeature).isContainment() && ((EReference) eFeature).getEOpposite() != null) {
-                        DBList values=queryAll(this, ((EReference) eFeature), eFeature);
+                        DBList values=queryAll(((EReference) eFeature), eFeature);
                         if (values.size() > 1)
                             throw new RemoteException("Found multiple values (instead of 1) for " + ((EReference) eFeature).getEOpposite());
 
@@ -171,9 +177,10 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
         return DBUtil.query(connection, cdoID, (Class<T>) eClass.getInstanceClass(), eClass().getEPackage());
     }
 
-    private DBList queryAll(DBObject dbObject, EReference reference, EStructuralFeature eFeature) throws SQLException {
+    private DBList queryAll(EReference reference, EStructuralFeature eFeature) throws SQLException {
         String columnName=((EReference) eFeature).isContainment() ? CDODBSchema.ATTRIBUTES_CONTAINER : DBQueryUtil.getColumnName(((EReference) eFeature)
                 .getEOpposite());
+        DBObjectImpl dbObject=this;
         if (dbObject.cdoID() == -1) {
             return new DBList(reference, dbObject);
         }
@@ -250,6 +257,7 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
         }
         internalESet(eFeature, newValue);
         eNotify(new ENotificationImpl(this, Notification.SET, eFeature, oldValue, newValue));
+        modified=true;
     }
 
     public void internalESet(EStructuralFeature eFeature, Object newValue) {
@@ -263,5 +271,41 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
     @Override
     protected final Object clone() throws CloneNotSupportedException {
         throw new CloneNotSupportedException();
+    }
+
+    @Override
+    public boolean isModified() {
+        return modified;
+    }
+
+    public void setModified(boolean modified) {
+        this.modified=modified;
+    }
+
+    public void addDetached(EReference ref, DBObject obj) {
+        if (DBUtil.isStoredInMemory(obj))
+            return; // NO-OP
+
+        if (detached == null)
+            detached=HashMultimap.create();
+        detached.put(ref, obj);
+    }
+
+    public void removeDetached(EReference ref, DBObject obj) {
+        if (detached != null)
+            detached.remove(ref, obj);
+    }
+
+    public void clearDetached() {
+        if (detached != null)
+            detached.clear();
+    }
+
+    @Override
+    public Collection<DBObject> detached(EReference ref) {
+        if (detached == null)
+            return Collections.emptyList();
+        else
+            return detached.get(ref);
     }
 }

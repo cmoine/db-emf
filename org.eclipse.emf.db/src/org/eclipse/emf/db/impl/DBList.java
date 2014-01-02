@@ -1,30 +1,33 @@
-package org.eclipse.emf.db.util;
+package org.eclipse.emf.db.impl;
 
 import java.util.Collection;
 
 import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.db.DBObject;
-import org.eclipse.emf.db.impl.DBObjectImpl;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.ETypedElement;
 
-public class DBList extends BasicEList<DBObject> {
+/* package */class DBList extends BasicEList<DBObject> {
     private final EReference opposite;
-    private final DBObject owner;
+    private final DBObjectImpl owner;
+    private final EReference ref;
 
-    public DBList(EReference ref, DBObject owner) {
+    public DBList(EReference ref, DBObjectImpl owner) {
+        this.ref=ref;
         this.owner=owner;
         opposite=getOpposite(ref);
     }
 
-    public DBList(EReference ref, DBObject owner, Collection<? extends DBObject> collection) {
+    public DBList(EReference ref, DBObjectImpl owner, Collection<? extends DBObject> collection) {
         super(collection);
+        this.ref=ref;
         this.owner=owner;
         opposite=getOpposite(ref);
     }
 
-    public DBList(EReference ref, DBObject owner, int initialCapacity) {
+    public DBList(EReference ref, DBObjectImpl owner, int initialCapacity) {
         super(initialCapacity);
+        this.ref=ref;
         this.owner=owner;
         opposite=getOpposite(ref);
     }
@@ -54,6 +57,7 @@ public class DBList extends BasicEList<DBObject> {
     protected void didAdd(int index, DBObject newObject) {
         if (opposite != null) {
             ((DBObjectImpl) newObject).internalESet(opposite, owner);
+            owner.removeDetached(ref, newObject);
         }
     }
 
@@ -61,6 +65,7 @@ public class DBList extends BasicEList<DBObject> {
     protected void didRemove(int index, DBObject oldObject) {
         if (opposite != null) {
             ((DBObjectImpl) oldObject).internalESet(opposite, null);
+            owner.addDetached(ref, oldObject);
         }
     }
 

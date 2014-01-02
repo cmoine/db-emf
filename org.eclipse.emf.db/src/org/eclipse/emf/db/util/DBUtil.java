@@ -9,7 +9,6 @@ import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
@@ -56,23 +55,10 @@ import com.google.common.io.BaseEncoding;
 
 public final class DBUtil {
     private static class MyProperties extends Properties {
-        // private List<File> tmpFiles=null;
-        //
+        private static final long serialVersionUID=3509184653228847019L;
+
         public void close() {
-        // if (tmpFiles != null) {
-        // for (File tmpFile : tmpFiles)
-        // tmpFile.delete();
-        // }
         }
-        //
-        // public File createTmpFile() throws IOException {
-        //            File file=File.createTempFile("db-emf-", ".dat"); //$NON-NLS-1$ //$NON-NLS-2$
-        // if (tmpFiles == null)
-        // tmpFiles=new ArrayList<File>();
-        //
-        // tmpFiles.add(file);
-        // return file;
-        // }
     }
 
     private static final SimpleDateFormat MYSQL_DATE_FORMAT=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); //$NON-NLS-1$
@@ -178,14 +164,11 @@ public final class DBUtil {
                 resultSet.close();
             }
             for (EClass clazz : DBModelInformationCache.getConcreteClasses(pkg)) {
-                // if (classifier instanceof EClass && !(((EClass) classifier).isAbstract())) {
-                // EClass clazz=(EClass) classifier;
                 List<String> columnNames=Lists.newArrayList();
                 String tableName=DBQueryUtil.getTableName(clazz);
                 if (!tableNames.remove(tableName.toLowerCase())) {
                     String createTableQuery=MessageFormat
                             .format("CREATE TABLE `{0}` (`cdo_id` bigint(20) NOT NULL AUTO_INCREMENT,`cdo_version` int(11) NOT NULL,`cdo_created` bigint(20) NOT NULL, `cdo_revised` bigint(20) NOT NULL, `cdo_resource` bigint(20), `cdo_container` bigint(20), `cdo_feature` int(11) NOT NULL,  UNIQUE KEY `{0}_idx0` (`cdo_id`,`cdo_version`),  KEY `{0}_idx1` (`cdo_id`,`cdo_revised`), KEY `{0}_idx2` (`cdo_container`,`cdo_version`)) ENGINE=InnoDB DEFAULT CHARSET=utf8;", tableName); //$NON-NLS-1$
-                    // logQuery(createTableQuery);
                     statement.execute(createTableQuery);
                 } else {
                     resultSet=statement.executeQuery(MessageFormat.format("describe {0};", tableName)); //$NON-NLS-1$
@@ -546,31 +529,6 @@ public final class DBUtil {
         return mapping;
     }
 
-    /**
-     * @deprecated Use {@link DBRunnable#save(Connection, DBObject)} instead
-     */
-    @Deprecated
-    public static void save(Connection connection, DBObject obj) throws SQLException {
-        doSave(connection, obj, obj.eClass().getEAllStructuralFeatures());
-    }
-
-    /**
-     * @deprecated Use {@link DBRunnable#save(DBObject, EStructuralFeature...)} instead
-     */
-    @Deprecated
-    public static void save(Connection connection, DBObject obj, EStructuralFeature... features) throws SQLException {
-        doSave(connection, obj, Arrays.asList(features));
-    }
-
-    /**
-     * @deprecated Use {@link DBRunnable#save(DBObject, Collection)} instead
-     */
-    @Deprecated
-    @SuppressWarnings("unchecked")
-    public static void save(Connection connection, DBObject obj, Collection<? extends EStructuralFeature> features) throws SQLException {
-        doSave(connection, obj, (Collection<EStructuralFeature>) features);
-    }
-
     private static abstract class MyRunnable implements Runnable {
         private final DBObject obj;
 
@@ -630,7 +588,6 @@ public final class DBUtil {
                     @Override
                     protected void safeRun(DBObject obj) {
                         fireCreated(obj);
-//                        WebSocketService.INSTANCE.broadcastCreated(obj);
                     }
                 });
                 // Assume that all 0..* relations are empty

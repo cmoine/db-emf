@@ -56,6 +56,26 @@ import com.google.common.collect.Lists;
 import com.google.common.io.BaseEncoding;
 
 public final class DBUtil {
+    private static class MyProperties extends Properties {
+        // private List<File> tmpFiles=null;
+        //
+        public void close() {
+        // if (tmpFiles != null) {
+        // for (File tmpFile : tmpFiles)
+        // tmpFile.delete();
+        // }
+        }
+        //
+        // public File createTmpFile() throws IOException {
+        //            File file=File.createTempFile("db-emf-", ".dat"); //$NON-NLS-1$ //$NON-NLS-2$
+        // if (tmpFiles == null)
+        // tmpFiles=new ArrayList<File>();
+        //
+        // tmpFiles.add(file);
+        // return file;
+        // }
+    }
+
     private static final SimpleDateFormat MYSQL_DATE_FORMAT=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); //$NON-NLS-1$
 
     private static BiMap<Long, String> resources;
@@ -563,11 +583,12 @@ public final class DBUtil {
             throw new DBException("You must execute this in a transaction");
 
         Statement stmt=connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-        try {
-            ((DBObjectImpl) obj).setConnection(connection);
+        ((DBObjectImpl) obj).setConnection(connection);
 
+        MyProperties props=null;
+        try {
             if (obj.cdoID() == -1) {
-                Properties props=getValuesAsProperties(stmt, obj, obj.eClass().getEAllStructuralFeatures());
+                props=getValuesAsProperties(stmt, obj, obj.eClass().getEAllStructuralFeatures());
                 props.setProperty(CDODBSchema.ATTRIBUTES_VERSION, "1"); //$NON-NLS-1$
                 props.setProperty(CDODBSchema.ATTRIBUTES_REVISED, "0"); //$NON-NLS-1$
                 props.setProperty(CDODBSchema.ATTRIBUTES_FEATURE, "0"); //$NON-NLS-1$
@@ -608,7 +629,7 @@ public final class DBUtil {
                 // ((DBObjectImpl) obj).map().put(ref, new DBList(ref, obj));
                 // }
             } else {
-                Properties props=getValuesAsProperties(stmt, obj, features);
+                props=getValuesAsProperties(stmt, obj, features);
                 StringBuilder builder=new StringBuilder();
                 for (String key : Iterables.filter(props.keySet(), String.class)) {
                     if (builder.length() > 0)
@@ -645,6 +666,8 @@ public final class DBUtil {
             }
         } finally {
             stmt.close();
+            if (props != null)
+                props.close();
         }
     }
     
@@ -678,9 +701,9 @@ public final class DBUtil {
         }
     }
 
-    private static Properties getValuesAsProperties(Statement stmt, final DBObject obj, Collection<EStructuralFeature> features) throws SQLException {
+    private static MyProperties getValuesAsProperties(Statement stmt, final DBObject obj, Collection<EStructuralFeature> features) throws SQLException {
         Connection connection=stmt.getConnection();
-        Properties values=new Properties();
+        MyProperties values=new MyProperties();
         for (EAttribute att : Iterables.filter(features, EAttribute.class)) {
             if (att.getUpperBound() != ETypedElement.UNBOUNDED_MULTIPLICITY) {
                 Object value=obj.eGet(att);
@@ -693,7 +716,7 @@ public final class DBUtil {
                 else if (att.getEType().equals(EcorePackage.eINSTANCE.getEDate()))
                     value=value == null ? null : DBQueryUtil.quote(MYSQL_DATE_FORMAT.format((java.util.Date) value));
                 else if (att.getEType().equals(EcorePackage.eINSTANCE.getEByteArray()))
-                    value=value == null ? null : "FROM_BASE64('" + BaseEncoding.base64().encode((byte[]) value) + "')"; //$NON-NLS-1$
+                    value=value == null ? null : "x'" + BaseEncoding.base16().encode((byte[]) value) + '\''; //$NON-NLS-1$ 
 
                 values.setProperty(DBQueryUtil.getColumnName(att), Objects.toString(value));
             }

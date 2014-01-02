@@ -63,6 +63,7 @@ public final class DBModelInformationCache {
     public static boolean hasInheritance(EReference ref) {
         if (ref == null)
             return false;
+
         if (ref.getEType() != null && ((EClass) ref.getEType()).isAbstract()) {
             EAnnotation annotation=ref.getEAnnotation("http://www.eclipse.org/DB-EMF");
             Assert.isTrue(annotation != null && Boolean.parseBoolean(annotation.getDetails().get("inheritance")), //

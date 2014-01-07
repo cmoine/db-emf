@@ -193,6 +193,12 @@ public final class DBUtil {
                                 String query="ALTER TABLE " + tableName + " ADD COLUMN "
                                         + MessageFormat.format("`" + columnName + "` " + entry.getValue() + " NULL DEFAULT NULL", columnName, type); //$NON-NLS-1$
                                 statement.execute(query);
+                                
+                                String dropIndex="ALTER TABLE " + tableName + " DROP INDEX " + tableName + "_idx2";
+                                statement.execute(dropIndex);
+                                String createIndex="ALTER TABLE " + tableName + " ADD INDEX " + tableName + "_idx2 (`cdo_container`,`cdo_version`,`"
+                                        + INTERNAL_CLASS.apply(ref) + "`)";
+                                statement.execute(createIndex);
                             }
                         }
                     }

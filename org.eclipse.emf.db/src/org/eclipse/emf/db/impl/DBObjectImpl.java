@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.eclipse.emf.cdo.server.internal.db.CDODBSchema;
 import org.eclipse.emf.common.notify.Notification;
@@ -256,8 +257,10 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
             }
         }
         internalESet(eFeature, newValue);
-        eNotify(new ENotificationImpl(this, Notification.SET, eFeature, oldValue, newValue));
-        modified=true;
+        if (!Objects.equals(oldValue, newValue)) {
+            eNotify(new ENotificationImpl(this, Notification.SET, eFeature, oldValue, newValue));
+            modified=true;
+        }
     }
 
     public void internalESet(EStructuralFeature eFeature, Object newValue) {

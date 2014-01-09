@@ -15,9 +15,17 @@ public interface DBObject extends EObject {
 
     public long cdoRevision();
 
-    public void setResource(String path);
+    public void cdoSetResource(String path);
 
-    public boolean isModified();
+    /**
+     * @return true if this object was modified since the last load from DB. Return always true is the object has not being persisted at all.
+     */
+    public boolean dbIsModified();
 
-    public Collection<DBObject> detached(EReference ref);
+    // /**
+    // * @return The list of structural feature modified if any, may return null if none
+    // */
+    // public Set<EStructuralFeature> dbModified();
+
+    public Collection<DBObject> dbDetached(EReference ref);
 }

@@ -452,7 +452,7 @@ public final class DBUtil {
 
     private static Map<String, Integer> fetch2(ResultSet rSet, DBObject obj, Map<String, Integer> mapping) throws SQLException {
         // ((DBObjectImpl) obj).setCdoID(rSet.getLong(CDODBSchema.ATTRIBUTES_ID));
-        obj.setResource(getResources(rSet.getStatement().getConnection()).get(rSet.getLong(CDODBSchema.ATTRIBUTES_RESOURCE)));
+        obj.cdoSetResource(getResources(rSet.getStatement().getConnection()).get(rSet.getLong(CDODBSchema.ATTRIBUTES_RESOURCE)));
         ((DBObjectImpl) obj).setRevision(rSet.getLong(CDODBSchema.ATTRIBUTES_CREATED));
         ((DBObjectImpl) obj).setConnection(rSet.getStatement().getConnection());
 
@@ -531,6 +531,7 @@ public final class DBUtil {
         }
 
         ((DBObjectImpl) obj).map().put(obj.eContainmentFeature(), rSet.getLong(CDODBSchema.ATTRIBUTES_CONTAINER));
+        ((DBObjectImpl) obj).dbClearModified();
 
         return mapping;
     }
@@ -637,8 +638,8 @@ public final class DBUtil {
                     }
                 });
             }
-            ((DBObjectImpl) obj).setModified(false);
-            ((DBObjectImpl) obj).clearDetached();
+            ((DBObjectImpl) obj).dbClearModified();
+            ((DBObjectImpl) obj).dbClearDetached();
         } finally {
             stmt.close();
             if (props != null)
@@ -757,7 +758,7 @@ public final class DBUtil {
             ((DBObjectImpl) obj).setCdoID(-1);
             ((DBObjectImpl) obj).setConnection(null);
             // ((DBObjectImpl) obj).map().clear();
-            ((DBObjectImpl) obj).setResource(null);
+            ((DBObjectImpl) obj).cdoSetResource(null);
             ((DBObjectImpl) obj).setRevision(-1L);
 
             // On supprime les enfants

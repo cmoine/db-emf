@@ -57,7 +57,7 @@ import org.eclipse.emf.ecore.ETypedElement;
     protected void didAdd(int index, DBObject newObject) {
         if (opposite != null) {
             ((DBObjectImpl) newObject).internalESet(opposite, owner);
-            owner.removeDetached(ref, newObject);
+            owner.dbRemoveDetached(ref, newObject);
         }
     }
 
@@ -65,7 +65,7 @@ import org.eclipse.emf.ecore.ETypedElement;
     protected void didRemove(int index, DBObject oldObject) {
         if (opposite != null) {
             ((DBObjectImpl) oldObject).internalESet(opposite, null);
-            owner.addDetached(ref, oldObject);
+            owner.dbAddDetached(ref, oldObject);
         }
     }
 

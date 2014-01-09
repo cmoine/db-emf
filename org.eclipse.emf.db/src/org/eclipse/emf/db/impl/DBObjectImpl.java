@@ -39,7 +39,9 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
     private final Map<EStructuralFeature, Object> map;
     private Multimap<EReference, DBObject> detached;
     private final EReference containmentRef;
-    private boolean modified;
+    private boolean isModified=true;
+
+    // private Set<EStructuralFeature> modified=Sets.newHashSet(eClass().getEAllStructuralFeatures());
 
     protected DBObjectImpl() {
         map=Maps.newHashMapWithExpectedSize(eClass().getEAllStructuralFeatures().size());
@@ -89,7 +91,7 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
     }
 
     @Override
-    public void setResource(String cdoResource) {
+    public void cdoSetResource(String cdoResource) {
         this.cdoResource=cdoResource;
     }
 
@@ -255,11 +257,17 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
                     }
                 }
             }
+            if (newValue == null) {
+                if (oldValue != null)
+                    dbAddDetached(reference, (DBObject) oldValue);
+            } else {
+                dbRemoveDetached(reference, (DBObject) newValue);
+            }
         }
         internalESet(eFeature, newValue);
         if (!Objects.equals(oldValue, newValue)) {
             eNotify(new ENotificationImpl(this, Notification.SET, eFeature, oldValue, newValue));
-            modified=true;
+            dbSetModified(eFeature);
         }
     }
 
@@ -277,15 +285,31 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
     }
 
     @Override
-    public boolean isModified() {
-        return modified;
+    public boolean dbIsModified() {
+        return isModified;
     }
 
-    public void setModified(boolean modified) {
-        this.modified=modified;
+    public void dbSetModified(EStructuralFeature feature) {
+        isModified=true;
+        // if (modified == null)
+        // modified=Sets.newHashSet();
+        // modified.add(feature);
     }
 
-    public void addDetached(EReference ref, DBObject obj) {
+    public void dbClearModified() {
+        isModified=false;
+        // modified=null;
+    }
+
+    // @Override
+    // public Set<EStructuralFeature> dbModified() {
+    // if(isModified) {
+    //
+    // }
+    // return modified;
+    // }
+
+    public void dbAddDetached(EReference ref, DBObject obj) {
         if (DBUtil.isStoredInMemory(obj))
             return; // NO-OP
 
@@ -294,18 +318,18 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
         detached.put(ref, obj);
     }
 
-    public void removeDetached(EReference ref, DBObject obj) {
+    public void dbRemoveDetached(EReference ref, DBObject obj) {
         if (detached != null)
             detached.remove(ref, obj);
     }
 
-    public void clearDetached() {
+    public void dbClearDetached() {
         if (detached != null)
             detached.clear();
     }
 
     @Override
-    public Collection<DBObject> detached(EReference ref) {
+    public Collection<DBObject> dbDetached(EReference ref) {
         if (detached == null)
             return Collections.emptyList();
         else

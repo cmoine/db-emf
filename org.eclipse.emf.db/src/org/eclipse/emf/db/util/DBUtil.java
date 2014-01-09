@@ -196,8 +196,8 @@ public final class DBUtil {
                                 
                                 String dropIndex="ALTER TABLE " + tableName + " DROP INDEX " + tableName + "_idx2";
                                 statement.execute(dropIndex);
-                                String createIndex="ALTER TABLE " + tableName + " ADD INDEX " + tableName + "_idx2 (`cdo_container`,`cdo_version`,`"
-                                        + INTERNAL_CLASS.apply(ref) + "`)";
+                                String createIndex="ALTER TABLE " + tableName + " ADD INDEX " + tableName + "_idx2 (`" + INTERNAL_CLASS.apply(ref)
+                                        + "`,`cdo_container`,`cdo_version`)";
                                 statement.execute(createIndex);
                             }
                         }

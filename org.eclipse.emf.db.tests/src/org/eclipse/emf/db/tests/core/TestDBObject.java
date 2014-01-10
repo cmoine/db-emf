@@ -3,6 +3,7 @@ package org.eclipse.emf.db.tests.core;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.eclipse.emf.db.tests.model.Child;
 import org.eclipse.emf.db.tests.model.ModelFactory;
@@ -78,4 +79,32 @@ public class TestDBObject {
         root.setSubRoot(null);
         assertNull("Inverse Remove not made", subRoot.getRoot());
     }
+
+    @Test
+    public void reparent() {
+        Root root1=ModelFactory.eINSTANCE.createRoot();
+        Root root2=ModelFactory.eINSTANCE.createRoot();
+        Child child=ModelFactory.eINSTANCE.createChild();
+        child.setRoot(root1);
+        child.setRoot(root2); // Change parent
+        assertTrue("Reparent not made", root1.getChildren().isEmpty());
+    }
+
+    @Test
+    public void reparentExt() {
+        Root root1=ModelFactory.eINSTANCE.createRoot();
+        Root root2=ModelFactory.eINSTANCE.createRoot();
+        Child child=ModelFactory.eINSTANCE.createChild();
+        Child child2=ModelFactory.eINSTANCE.createChild();
+        // First data
+        root1.getChildren().add(child);
+        root2.getChildren().add(child2);
+
+        // Merge
+        root1.getChildren().clear();
+        root1.getChildren().add(child);
+        root1.getChildren().add(child2);
+        assertTrue("Reparent not made", root2.getChildren().isEmpty());
+    }
+
 }

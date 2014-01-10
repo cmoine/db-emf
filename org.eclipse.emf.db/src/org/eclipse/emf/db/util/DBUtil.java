@@ -753,14 +753,6 @@ public final class DBUtil {
         try {
             stmt.execute("DELETE FROM " + DBQueryUtil.getTableName(obj.eClass()) + " WHERE " + CDODBSchema.ATTRIBUTES_ID + '=' + obj.cdoID());
 
-            // On desactive l objet
-            objects.invalidate(key(obj));
-            ((DBObjectImpl) obj).setCdoID(-1);
-            ((DBObjectImpl) obj).setConnection(null);
-            // ((DBObjectImpl) obj).map().clear();
-            ((DBObjectImpl) obj).cdoSetResource(null);
-            ((DBObjectImpl) obj).setRevision(-1L);
-
             // On supprime les enfants
             if (!obj.eClass().getEAllContainments().isEmpty()) {
                 for (EReference reference : obj.eClass().getEAllContainments()) {
@@ -785,6 +777,14 @@ public final class DBUtil {
                     container.map().remove(reference.getEOpposite());
                 }
             }
+
+            // On desactive l objet
+            objects.invalidate(key(obj));
+            ((DBObjectImpl) obj).setCdoID(-1);
+            ((DBObjectImpl) obj).setConnection(null);
+            // ((DBObjectImpl) obj).map().clear();
+            ((DBObjectImpl) obj).cdoSetResource(null);
+            ((DBObjectImpl) obj).setRevision(-1L);
 
             connection.commit();
         } finally {
@@ -856,5 +856,10 @@ public final class DBUtil {
 
     public static String internalClass(EReference ref) {
         return INTERNAL_CLASS.apply(ref);
+    }
+
+    @Deprecated
+    public static Cache<Long, DBObject> getCache() {
+        return objects;
     }
 }

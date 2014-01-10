@@ -234,10 +234,12 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
     public void eSet(EStructuralFeature eFeature, Object newValue) {
         Object oldValue=map().get(eFeature);
         if (eFeature instanceof EReference) {
-            EReference reference=((EReference) eFeature);
+            EReference reference=(EReference) eFeature;
+            // Handle EOpposite
             EReference opposite=reference.getEOpposite();
             if (opposite != null) {
                 if (opposite.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
+                    // Handle newValue
                     if (newValue == null) {
                         DBObjectImpl obj=(DBObjectImpl) eGet(reference);
                         if (obj != null)
@@ -247,6 +249,16 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
                         if (!list.contains(this))
                             list.add(this);
                     }
+
+                    // Handle oldValue
+                    // if (oldValue != null) {
+                    // if (oldValue instanceof Long) {
+                    // DBObject obj=DBUtil.getCache().getIfPresent(oldValue);
+                    // if (obj != null)
+                    // ((List<Object>) ((EObject) obj).eGet(opposite)).remove(this);
+                    // } else
+                    // ((List<Object>) ((EObject) oldValue).eGet(opposite)).remove(this);
+                    // }
                 } else {
                     if (newValue == null) {
                         DBObjectImpl obj=(DBObjectImpl) eGet(reference);
@@ -257,9 +269,19 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
                     }
                 }
             }
+
+            // Handle Detached
             if (newValue == null) {
-                if (oldValue != null)
-                    dbAddDetached(reference, (DBObject) oldValue);
+                if (oldValue != null) {
+                    if (oldValue instanceof Long) {
+                        DBObject obj=DBUtil.getCache().getIfPresent(oldValue);
+                        if (obj != null)
+                            dbAddDetached(reference, obj);
+                        // System.err.println("Quentin erreur ? pour oldValue=2 avec reference");
+                    } else {
+                        dbAddDetached(reference, (DBObject) oldValue);
+                    }
+                }
             } else {
                 dbRemoveDetached(reference, (DBObject) newValue);
             }

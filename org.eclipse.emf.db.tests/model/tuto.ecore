@@ -82,4 +82,18 @@
           eType="#//MultipleDecomposition/UserGroup" eOpposite="#//MultipleDecomposition/UserGroup/group"/>
     </eClassifiers>
   </eSubpackages>
+  <eSubpackages name="MultipleAttribute">
+    <eClassifiers xsi:type="ecore:EClass" name="Client">
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="tags" upperBound="-1"
+          eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="Client">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="tags" upperBound="-1"
+          eType="#//MultipleAttribute/Tag" eOpposite="#//MultipleAttribute/Tag/client"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="Tag">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="client" eType="#//MultipleAttribute/Client.1"
+          eOpposite="#//MultipleAttribute/Client.1/tags"/>
+    </eClassifiers>
+  </eSubpackages>
 </ecore:EPackage>

@@ -24,6 +24,15 @@ public abstract class QueryExpression {
         return from(obj.cdoID());
     }
 
+    public static QueryExpression from(final boolean b) {
+        return new QueryExpression() {
+            @Override
+            public String toString() {
+                return b ? "1" : "0"; //$NON-NLS-1$ //$NON-NLS-2$
+            }
+        };
+    }
+
     public static QueryExpression from(final double d) {
         return new QueryExpression() {
             @Override
@@ -92,6 +101,21 @@ public abstract class QueryExpression {
             @Override
             public String toString() {
                 return QueryExpression.this.toString() + " IN (" + step.getSQL() + ')';
+            }
+        };
+    }
+
+    public QueryExpression in(final DBObject... dbObjects) {
+        return new QueryExpression() {
+            @Override
+            public String toString() {
+                StringBuffer buf=new StringBuffer();
+                for (DBObject dbObject : dbObjects) {
+                    if (buf.length() > 0)
+                        buf.append(',');
+                    buf.append(from(dbObject));
+                }
+                return QueryExpression.this.toString() + " IN (" + buf + ')';
             }
         };
     }
@@ -239,6 +263,22 @@ public abstract class QueryExpression {
             @Override
             public String toString() {
                 return new StringBuilder('(').append(QueryExpression.this.toString()).append(">=").append(expr.toString()).toString(); //$NON-NLS-1$
+            }
+        };
+    }
+
+    private static final SimpleDateFormat SDF_DAY=new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
+
+    private static final long MILLIS_PER_DAY=24L * 60L * 60L * 1000L;
+
+    public QueryExpression between(final Date debut, Date fin) {
+        final Date finalFin=new Date(fin.getTime() + MILLIS_PER_DAY);
+        return new QueryExpression() {
+
+            @Override
+            public String toString() {
+                return new StringBuilder(QueryExpression.this.toString())
+                        .append(" BETWEEN ").append(SDF_DAY.format(debut)).append(" IN ").append(SDF_DAY.format(finalFin)).toString(); //$NON-NLS-1$
             }
         };
     }

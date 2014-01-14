@@ -114,9 +114,9 @@ public final class DBUtil {
             // Check upper bounds
             for (EStructuralFeature feature : clazz.getEAllStructuralFeatures()) {
                 if (feature.getLowerBound() != 0 && feature.getLowerBound() != 1)
-                    throw new UnsupportedOperationException("Lower bound *must* be equals to zero or 1 " + feature);
+                    throw new UnsupportedOperationException("Lower bound *must* be equals to zero or 1 " + feature); //$NON-NLS-1$
                 if (feature.getUpperBound() != 1 && feature.getUpperBound() != ETypedElement.UNBOUNDED_MULTIPLICITY)
-                    throw new UnsupportedOperationException("Upper bound *must* be equals to 1 or 'EStructuralFeature.UNBOUNDED_MULTIPLICITY' " + feature);
+                    throw new UnsupportedOperationException("Upper bound *must* be equals to 1 or 'EStructuralFeature.UNBOUNDED_MULTIPLICITY' " + feature); //$NON-NLS-1$
 
                 // Additionnal checks on EReferences
                 if (feature instanceof EReference) {
@@ -124,30 +124,33 @@ public final class DBUtil {
                     // 0..* relation to abstract is not allowed
                     if (ref.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
                         if (ref.getEOpposite() == null || ref.getEOpposite().getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY)
-                            throw new UnsupportedOperationException("Multiple relation must have a 0..1 EOpposite: " + toString(ref));
+                            throw new UnsupportedOperationException("Multiple relation must have a 0..1 EOpposite: " + toString(ref)); //$NON-NLS-1$
 
                         if (ref.getEType() instanceof EClass) {
                             EClass type=(EClass) ref.getEType();
                             if (type.isAbstract())
-                                throw new UnsupportedOperationException("Multiple relation to abstract class is not supported for performance issues: "
+                                throw new UnsupportedOperationException("Multiple relation to abstract class is not supported for performance issues: " //$NON-NLS-1$
                                         + toString(ref));
                         }
                     }
                     // Check that 0..1 - 0..1 has at least one containment reference
                     if (ref.getUpperBound() == 1 && ref.getEOpposite() != null && ref.getEOpposite().getUpperBound() == 1) {
                         if ((!ref.isContainment()) && (!ref.getEOpposite().isContainment())) {
-                            throw new UnsupportedOperationException("0..1 - 0..1 relation must have at least one containment reference: " + toString(ref));
+                            throw new UnsupportedOperationException("0..1 - 0..1 relation must have at least one containment reference: " + toString(ref)); //$NON-NLS-1$
                         }
                     }
                     // Check the reference without caring about the result
                     DBModelInformationCache.hasInheritance(ref);
+                } else if (feature instanceof EAttribute) {
+                    if (feature.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY)
+                        throw new UnsupportedOperationException("Multiple relations are forbidden for attributes: " + toString(feature)); //$NON-NLS-1$
                 }
             }
         }
     }
 
-    /* package */static String toString(EReference ref) {
-        return ref.getEContainingClass().getName() + " -> " + ref.getName() + " -> " + ref.getEType().getName();
+    /* package */static String toString(EStructuralFeature ref) {
+        return ref.getEContainingClass().getName() + " -> " + ref.getName() + " -> " + ref.getEType().getName(); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     public static void createOrUpdateDBStructure(Connection connection, EPackage pkg) throws SQLException {
@@ -205,18 +208,18 @@ public final class DBUtil {
                 }
                 // Create column for EStructuralFeatures
                 for (EStructuralFeature feature : clazz.getEAllStructuralFeatures()) {
-                    if (feature.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
-                        if (feature instanceof EAttribute) {
-                            EAttribute attribute=(EAttribute) feature;
-                            String subTableName=DBQueryUtil.getTableName(attribute);
-                            if (!tableNames.remove(subTableName.toLowerCase())) {
-                                String query=MessageFormat
-                                        .format("CREATE TABLE `{0}` (`cdo_source` bigint(20) DEFAULT NULL, `cdo_idx` int(11) DEFAULT NULL, {1}, UNIQUE KEY `{0}_idx0` (`cdo_source`,`cdo_idx`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8;", //$NON-NLS-1$
-                                                subTableName, getSubQuery(attribute, CDODBSchema.LIST_VALUE));
-                                statement.execute(query);
-                            }
-                        }
-                    } else {
+                    if (feature.getUpperBound() == 1) {
+                        // if (feature instanceof EAttribute) {
+                        // EAttribute attribute=(EAttribute) feature;
+                        // String subTableName=DBQueryUtil.getTableName(attribute);
+                        // if (!tableNames.remove(subTableName.toLowerCase())) {
+                        // String query=MessageFormat
+                        //                                        .format("CREATE TABLE `{0}` (`cdo_source` bigint(20) DEFAULT NULL, `cdo_idx` int(11) DEFAULT NULL, {1}, UNIQUE KEY `{0}_idx0` (`cdo_source`,`cdo_idx`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8;", //$NON-NLS-1$
+                        // subTableName, getSubQuery(attribute, CDODBSchema.LIST_VALUE));
+                        // statement.execute(query);
+                        // }
+                        // }
+                        // } else {
                         String columnName=DBQueryUtil.getColumnName(feature);
                         String query=null;
                         if (feature instanceof EAttribute) {

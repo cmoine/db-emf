@@ -65,8 +65,8 @@ public abstract class DBRunnable {
     public void saveDeep(DBObject dbObject, int deep) throws SQLException {
         if (dbObject == null)
             return;
-
-        if (!dbObject.eContents().isEmpty() && (deep == -1 || deep >= 1)) {
+        // QLE deep < 0 pour deep=-1 & deep >=1 si on appel la methode avec un deep > à 1
+        if (!dbObject.eContents().isEmpty() && (deep < 0 || deep >= 1)) {
             for (EObject childDBObject : dbObject.eContents())
                 saveDeep((DBObject) childDBObject, deep - 1);
         }

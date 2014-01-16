@@ -89,7 +89,7 @@ public final class DBUtil {
 
     public static void clearObjectCache() {
         objects.invalidateAll();
-        resources=null;
+        resources.clear();
     }
 
     private static ThreadLocal<Boolean> canSave=new ThreadLocal<Boolean>() {

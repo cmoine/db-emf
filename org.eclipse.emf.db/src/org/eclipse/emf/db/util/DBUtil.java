@@ -435,7 +435,7 @@ public final class DBUtil {
         if (!resources.containsValue(resource)) {
             Statement stmt=con.createStatement();
             try {
-                ResultSet rSet=stmt.executeQuery("SELECT " + CDODBSchema.ATTRIBUTES_ID + " FROM cdoresource WHERE name='" + resource + '"');
+                ResultSet rSet=stmt.executeQuery("SELECT " + CDODBSchema.ATTRIBUTES_ID + " FROM cdoresource WHERE name='" + resource + '\'');
                 while (rSet.next()) {
                     resources.put(rSet.getLong(1), resource);
                 }

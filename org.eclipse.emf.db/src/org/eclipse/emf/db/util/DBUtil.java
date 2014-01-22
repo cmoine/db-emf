@@ -300,7 +300,7 @@ public final class DBUtil {
                                         for (List<Long> ids : Iterables.partition(values, PARTITION_SIZE)) {
                                             stmt.execute("UPDATE " + DBQueryUtil.getTableName(clazz) + " SET " + INTERNAL_CLASS.apply(ref) + '='
                                                     + cdoInternalClass(clazz2) + ',' + INTERNAL_CLASS_NAME.apply(ref) + '='
-                                                    + DBQueryUtil.quote(cdoInternalClassName(clazz2)) + " WHERE " + DBQueryUtil.getColumnName(ref) + " IN ("
+                                                    + DBQueryUtil.quote(cdoInternalClassName(clazz2)) + " WHERE " + DBQueryUtil.getColumnNameExt(ref) + " IN ("
                                                     + Joiner.on(',').join(ids) + ")");
                                         }
                                     }

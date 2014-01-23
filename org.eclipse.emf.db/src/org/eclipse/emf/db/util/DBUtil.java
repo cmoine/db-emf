@@ -285,6 +285,7 @@ public final class DBUtil {
             monitor.beginTask(taskName, concreteClasses.size());
             for (EClass clazz : concreteClasses) {
                 stmt.execute("ALTER TABLE " + DBQueryUtil.getTableName(clazz) + " CHANGE COLUMN `cdo_id` `cdo_id` BIGINT(20) NOT NULL AUTO_INCREMENT ;");
+                stmt.execute("ALTER TABLE " + DBQueryUtil.getTableName(clazz) + " MODIFY `cdo_container` BIGINT(20) ;");
                 for (EReference ref : clazz.getEAllReferences()) {
                     if (DBModelInformationCache.hasInheritance(ref)) {
                         for (EClass clazz2 : concreteClasses) {

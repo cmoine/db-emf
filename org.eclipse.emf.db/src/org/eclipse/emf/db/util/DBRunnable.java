@@ -66,11 +66,11 @@ public abstract class DBRunnable {
         if (dbObject == null)
             return;
         // QLE deep < 0 pour deep=-1 & deep >=1 si on appel la methode avec un deep > à 1
+        if (dbObject.dbIsModified())
+            save(dbObject);
         if (!dbObject.eContents().isEmpty() && (deep < 0 || deep >= 1)) {
             for (EObject childDBObject : dbObject.eContents())
                 saveDeep((DBObject) childDBObject, deep - 1);
         }
-        if (dbObject.dbIsModified())
-            save(dbObject);
     }
 }

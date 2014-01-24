@@ -89,7 +89,7 @@ public final class DBUtil {
 
     public static void clearObjectCache() {
         objects.invalidateAll();
-        resources=null;
+        resources.clear();
     }
 
     private static ThreadLocal<Boolean> canSave=new ThreadLocal<Boolean>() {
@@ -285,6 +285,8 @@ public final class DBUtil {
             monitor.beginTask(taskName, concreteClasses.size());
             for (EClass clazz : concreteClasses) {
                 stmt.execute("ALTER TABLE " + DBQueryUtil.getTableName(clazz) + " CHANGE COLUMN `cdo_id` `cdo_id` BIGINT(20) NOT NULL AUTO_INCREMENT ;");
+                stmt.execute("ALTER TABLE " + DBQueryUtil.getTableName(clazz) + " MODIFY `cdo_container` BIGINT(20) ;");
+                stmt.execute("ALTER TABLE " + DBQueryUtil.getTableName(clazz) + " MODIFY `cdo_resource` BIGINT(20) ;");
                 for (EReference ref : clazz.getEAllReferences()) {
                     if (DBModelInformationCache.hasInheritance(ref)) {
                         for (EClass clazz2 : concreteClasses) {
@@ -300,7 +302,7 @@ public final class DBUtil {
                                         for (List<Long> ids : Iterables.partition(values, PARTITION_SIZE)) {
                                             stmt.execute("UPDATE " + DBQueryUtil.getTableName(clazz) + " SET " + INTERNAL_CLASS.apply(ref) + '='
                                                     + cdoInternalClass(clazz2) + ',' + INTERNAL_CLASS_NAME.apply(ref) + '='
-                                                    + DBQueryUtil.quote(cdoInternalClassName(clazz2)) + " WHERE " + DBQueryUtil.getColumnName(ref) + " IN ("
+                                                    + DBQueryUtil.quote(cdoInternalClassName(clazz2)) + " WHERE " + DBQueryUtil.getColumnNameExt(ref) + " IN ("
                                                     + Joiner.on(',').join(ids) + ")");
                                         }
                                     }

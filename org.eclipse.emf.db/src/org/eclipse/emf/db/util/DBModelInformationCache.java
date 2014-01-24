@@ -9,7 +9,6 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.emf.db.DBObject;
 import org.eclipse.emf.ecore.EAnnotation;
 import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
 
@@ -29,13 +28,10 @@ public final class DBModelInformationCache {
     public static EClass getEClassFromCdoClass(EPackage ePackage, int cdoInternalClass) {
         EClass result=CDO_INTERNAL_CLASS_MAP.get(cdoInternalClass);
         if (result == null) {
-            for (EClassifier classifier : ePackage.getEClassifiers()) {
-                if (classifier instanceof EClass) {
-                    EClass eClass=(EClass) classifier;
-                    if (eClass.getName().hashCode() == cdoInternalClass) {
-                        result=eClass;
-                        CDO_INTERNAL_CLASS_MAP.put(cdoInternalClass, result);
-                    }
+            for (EClass eClass : getConcreteClasses(ePackage)) {
+                if (eClass.getName().hashCode() == cdoInternalClass) {
+                    result=eClass;
+                    CDO_INTERNAL_CLASS_MAP.put(cdoInternalClass, result);
                 }
             }
         }

@@ -1,26 +1,24 @@
 package org.eclipse.emf.db.impl;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import org.eclipse.emf.cdo.server.internal.db.CDODBSchema;
 import org.eclipse.emf.common.notify.Notification;
-import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.db.DBObject;
 import org.eclipse.emf.db.RemoteException;
 import org.eclipse.emf.db.util.DBModelInformationCache;
 import org.eclipse.emf.db.util.DBQueryUtil;
 import org.eclipse.emf.db.util.DBUtil;
+import org.eclipse.emf.db.util.LazyLoadingInformation;
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.ETypedElement;
@@ -116,20 +114,28 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
                     Object value=map().get(eFeature);
 
                     // Replace value in the map on the fly
-                    if (value instanceof Long) {
-                        if (DBModelInformationCache.hasInheritance((EReference) eFeature)) {
-                            internalESet(eFeature, value=query(this, (EReference) eFeature));
-                        } else {
-                            if (connection == null) {
-                                System.err.println("CONNECTION = NULL - Demander à Christophe => return null;");
-                                return null;
-                            } else {
-                                internalESet(
-                                        eFeature,
-                                        value=DBUtil.query(connection, (Long) value, (Class<DBObject>) eFeature.getEType().getInstanceClass(), eClass()
-                                                .getEPackage()));
-                            }
+                    if (value instanceof LazyLoadingInformation) {
+                        if (connection == null) {
+                            System.err.println("CONNECTION = NULL - Demander à Christophe => return null;");
+                            return null;
                         }
+                        // if (DBModelInformationCache.hasInheritance((EReference) eFeature)) {
+                        internalESet(eFeature, value=query((LazyLoadingInformation) value));
+                        // if (eFeature.getName().equals("posologie") && value == null)
+                        // System.out.println("DBObjectImpl.eGet()");
+                        // } else {
+                        // if (connection == null) {
+                        // System.err.println("CONNECTION = NULL - Demander à Christophe => return null;");
+                        // return null;
+                        // } else {
+                        // internalESet(eFeature, value=query((LazyLoadingInformation) value));
+                        // // internalESet(
+                        // // eFeature,
+                        // // value=DBUtil.query(connection, (LazyLoadingInformation) value, (Class<DBObject>) eFeature.getEType().getInstanceClass(),
+                        // // eClass()
+                        // // .getEPackage()));
+                        // }
+                        // }
                     } else if (value == null && ((EReference) eFeature).isContainment() && ((EReference) eFeature).getEOpposite() != null) {
                         DBList values=queryAll(((EReference) eFeature), eFeature);
                         if (values.size() > 1)
@@ -141,17 +147,17 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
                     return value;
                 }
             } else {
-                if (eFeature.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
-                    String tableName=DBQueryUtil.getTableName((EAttribute) eFeature);
-                    if (connection != null) {
-                        internalESet(
-                                eFeature,
-                                new BasicEList<Object>(DBQueryUtil.queryStrings(connection, "SELECT " + CDODBSchema.LIST_VALUE + " FROM " + tableName
-                                        + " WHERE " + CDODBSchema.LIST_REVISION_ID + '=' + cdoID)));
-                    } else {
-                        internalESet(eFeature, new BasicEList<Object>());
-                    }
-                }
+                // if (eFeature.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
+                // String tableName=DBQueryUtil.getTableName((EAttribute) eFeature);
+                // if (connection != null) {
+                // internalESet(
+                // eFeature,
+                // new BasicEList<Object>(DBQueryUtil.queryStrings(connection, "SELECT " + CDODBSchema.LIST_VALUE + " FROM " + tableName
+                // + " WHERE " + CDODBSchema.LIST_REVISION_ID + '=' + cdoID)));
+                // } else {
+                // internalESet(eFeature, new BasicEList<Object>());
+                // }
+                // }
                 return map().get(eFeature);
             }
         } catch (SQLException e) {
@@ -159,30 +165,14 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
         }
     }
 
-    private <T extends DBObject> T query(DBObject dbObject, EReference reference) throws SQLException {
-        DBObjectImpl dbObjectImpl=(DBObjectImpl) dbObject;
-        long cdoID=(Long) dbObjectImpl.map().get(reference);
-        // On se fatigue, on cherche la bonne classe et on delegue
-        EClass eClass=(EClass) reference.getEType();
-        if (DBModelInformationCache.hasInheritance(reference)) {
-            int cdoInternalClass=Integer.MIN_VALUE;
-            Statement stmt=((DBObjectImpl) dbObject).connection.createStatement();
-            stmt.closeOnCompletion();
-            ResultSet rSet=stmt.executeQuery("SELECT " + DBUtil.internalClass(reference) + " FROM " //$NON-NLS-1$ //$NON-NLS-2$
-                    + DBQueryUtil.getTableName(dbObject.eClass()) + " WHERE " + CDODBSchema.ATTRIBUTES_ID + '=' + dbObject.cdoID()); //$NON-NLS-1$
-                if (rSet.next()) {
-                    cdoInternalClass=rSet.getInt(1);
-                }
-            eClass=DBModelInformationCache.getEClassFromCdoClass(dbObject.eClass().getEPackage(), cdoInternalClass);
-            if (eClass == null)
-                return null;
-        }
-        return DBUtil.query(connection, cdoID, (Class<T>) eClass.getInstanceClass(), eClass().getEPackage());
+    private <T extends DBObject> T query(LazyLoadingInformation lazyLoadingInformation) throws SQLException {
+        EPackage pkg=eClass().getEPackage();
+        return DBUtil.query(connection, lazyLoadingInformation.getCdoId(),
+                (Class<T>) DBModelInformationCache.getEClassFromCdoClass(pkg, lazyLoadingInformation.getClazz()).getInstanceClass(), pkg);
     }
 
     private DBList queryAll(EReference reference, EStructuralFeature eFeature) throws SQLException {
-        String columnName=((EReference) eFeature).isContainment() ? CDODBSchema.ATTRIBUTES_CONTAINER : DBQueryUtil.getColumnName(((EReference) eFeature)
-                .getEOpposite());
+        String columnName=DBQueryUtil.getColumnNameExt(((EReference) eFeature).getEOpposite());
         DBObjectImpl dbObject=this;
         if (dbObject.cdoID() == -1) {
             return new DBList(reference, dbObject);
@@ -210,7 +200,7 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
             return null;
         }
 
-        return (EObject) eGet(containmentRef, true, true);
+        return (EObject) eGet(containmentRef, true);
     }
 
     @Override

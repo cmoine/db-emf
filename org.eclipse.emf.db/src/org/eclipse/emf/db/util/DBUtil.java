@@ -477,16 +477,7 @@ public final class DBUtil {
         for (EAttribute att : obj.eClass().getEAllAttributes()) {
             if (att.getUpperBound() != ETypedElement.UNBOUNDED_MULTIPLICITY) {
                 String column=DBQueryUtil.getColumnName(att);
-                Integer columnIndex;
-                if (mapping == null) {
-                    columnIndex=rSet.findColumn(column);
-                } else {
-                    columnIndex=mapping.get(column);
-                    if (columnIndex == null) {
-                        columnIndex=rSet.findColumn(column);
-                        mapping.put(column, columnIndex);
-                    }
-                }
+                Integer columnIndex=findColumnIndex(rSet, mapping, column);
 
                 if (att.getEType().equals(EcorePackage.eINSTANCE.getEString())) {
                     obj.eSet(att, rSet.getString(columnIndex));
@@ -526,31 +517,54 @@ public final class DBUtil {
         }
         // Copy EReferences
         for (EReference ref : obj.eClass().getEAllReferences()) {
-            if (ref.getUpperBound() == 1 && !ref.isContainment()) {
+            if (ref.getUpperBound() == 1 /* && !ref.isContainment() */) {
                 // 0..1
-                String column=DBQueryUtil.getColumnName(ref);
-                Integer columnIndex;
-                if (mapping == null) {
-                    columnIndex=rSet.findColumn(column);
-                } else {
-                    columnIndex=mapping.get(column);
-                    if (columnIndex == null) {
-                        columnIndex=rSet.findColumn(column);
-                        mapping.put(column, columnIndex);
-                    }
-                }
+                int columnIndex=findColumnIndex(rSet, mapping, DBQueryUtil.getColumnNameExt(ref));
                 Long cdoId=rSet.getLong(columnIndex);
-                if (cdoId == 0L)
-                    cdoId=null;
+                if (cdoId == 0L || cdoId == null) {
+                    ((DBObjectImpl) obj).map().put(ref, null);
+                } else {
+                    // LazyLoadingInformation entry;
+                    int eClass;
+                    if (DBModelInformationCache.hasInheritance(ref)) {
+                        columnIndex=findColumnIndex(rSet, mapping, INTERNAL_CLASS.apply(ref));
+                        eClass=rSet.getInt(columnIndex);
+                    } else {
+                        eClass=DBUtil.cdoInternalClass((EClass) ref.getEType());
+                    }
 
-                ((DBObjectImpl) obj).map().put(ref, cdoId);
+                    ((DBObjectImpl) obj).map().put(ref, new LazyLoadingInformation(cdoId, eClass));
+                }
             }
         }
 
-        ((DBObjectImpl) obj).map().put(obj.eContainmentFeature(), rSet.getLong(CDODBSchema.ATTRIBUTES_CONTAINER));
+        // int columnIndex=findColumnIndex(rSet, mapping, CDODBSchema.ATTRIBUTES_CONTAINER);
+        // EClass eClass;
+        // if (DBModelInformationCache.hasInheritance(obj.eContainmentFeature())) {
+        // columnIndex=findColumnIndex(rSet, mapping, INTERNAL_CLASS.apply(obj.eContainmentFeature()));
+        // eClass=(EClass) obj.eClass().getEPackage().getEClassifier(rSet.getString(columnIndex));
+        // } else {
+        // eClass=(EClass) obj.eContainmentFeature().getEType();
+        // }
+        // ((DBObjectImpl) obj).map().put(obj.eContainmentFeature(), rSet.getLong(columnIndex));
+
         ((DBObjectImpl) obj).dbClearModified();
 
         return mapping;
+    }
+
+    private static Integer findColumnIndex(ResultSet rSet, Map<String, Integer> mapping, String column) throws SQLException {
+        Integer columnIndex;
+        if (mapping == null) {
+            columnIndex=rSet.findColumn(column);
+        } else {
+            columnIndex=mapping.get(column);
+            if (columnIndex == null) {
+                columnIndex=rSet.findColumn(column);
+                mapping.put(column, columnIndex);
+            }
+        }
+        return columnIndex;
     }
 
     private static abstract class MyRunnable implements Runnable {
@@ -718,7 +732,11 @@ public final class DBUtil {
             // EReference opposite=ref.getEOpposite();
             if (ref.getUpperBound() != ETypedElement.UNBOUNDED_MULTIPLICITY) {
                 DBObject value=(DBObject) obj.eGet(ref);
-                values.setProperty(DBQueryUtil.getColumnName(ref), Objects.toString((value == null ? null : value.cdoID())));
+                values.setProperty(DBQueryUtil.getColumnNameExt(ref), Objects.toString((value == null ? null : value.cdoID())));
+                if (DBModelInformationCache.hasInheritance(ref) && ref != obj.eContainmentFeature()) {
+                    values.setProperty(INTERNAL_CLASS.apply(ref), Objects.toString(value == null ? null : cdoInternalClass(value.eClass())));
+                    values.setProperty(INTERNAL_CLASS_NAME.apply(ref), value == null ? null : DBQueryUtil.quote(cdoInternalClassName(value.eClass())));
+                }
             }
         }
         long newRevision=System.currentTimeMillis();
@@ -743,6 +761,7 @@ public final class DBUtil {
             List<EReference> references=Lists.newArrayList(Collections2.filter(eContainer.eClass().getEAllReferences(), new Predicate<EReference>() {
                 @Override
                 public boolean apply(EReference ref) {
+                    // FIXME Use hasInheritence
                     return ref.getEType().equals(obj.eClass()) && ref.getEContainingClass().isAbstract();
                 }
             }));

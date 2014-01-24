@@ -263,11 +263,14 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
             // Handle Detached
             if (newValue == null) {
                 if (oldValue != null) {
-                    if (oldValue instanceof Long) {
-                        DBObject obj=DBUtil.getCache().getIfPresent(oldValue);
-                        if (obj != null)
-                            dbAddDetached(reference, obj);
-                        // System.err.println("Quentin erreur ? pour oldValue=2 avec reference");
+                    if (oldValue instanceof LazyLoadingInformation) {
+                        try {
+                            DBObject obj=query((LazyLoadingInformation)oldValue);
+                            if (obj != null)
+                                dbAddDetached(reference, obj);
+                        } catch (SQLException e) {
+                            throw new RemoteException(e);
+                        }
                     } else {
                         dbAddDetached(reference, (DBObject) oldValue);
                     }

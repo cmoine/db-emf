@@ -167,6 +167,10 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
 
     private <T extends DBObject> T query(LazyLoadingInformation lazyLoadingInformation) throws SQLException {
         EPackage pkg=eClass().getEPackage();
+        if (lazyLoadingInformation.getClazz() == 0){
+            System.err.println("cdo_container_internal_class is NULL (id="+lazyLoadingInformation.getCdoId()+", eclass="+eClass().getName()+")");
+            return null;
+        }
         return DBUtil.query(connection, lazyLoadingInformation.getCdoId(),
                 (Class<T>) DBModelInformationCache.getEClassFromCdoClass(pkg, lazyLoadingInformation.getClazz()).getInstanceClass(), pkg);
     }

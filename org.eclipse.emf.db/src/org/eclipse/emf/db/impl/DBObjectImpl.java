@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.db.DBObject;
@@ -25,6 +24,7 @@ import org.eclipse.emf.ecore.ETypedElement;
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
 import org.eclipse.emf.ecore.impl.EObjectImpl;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -284,7 +284,7 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
             }
         }
         internalESet(eFeature, newValue);
-        if (!Objects.equals(oldValue, newValue)) {
+        if (!Objects.equal(oldValue, newValue)) {
             eNotify(new ENotificationImpl(this, Notification.SET, eFeature, oldValue, newValue));
             dbSetModified(eFeature);
         }

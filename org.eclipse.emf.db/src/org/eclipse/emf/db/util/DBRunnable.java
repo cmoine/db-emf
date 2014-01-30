@@ -39,8 +39,11 @@ public abstract class DBRunnable {
 
     public void rawExecute(String query) throws SQLException {
         Statement stmt=connection.createStatement();
-        stmt.closeOnCompletion();
-        stmt.execute(query);
+        try {
+            stmt.execute(query);
+        } finally {
+            stmt.close();
+        }
     }
 
     public void reload(DBObject obj) throws SQLException {

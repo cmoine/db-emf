@@ -1,5 +1,6 @@
 package org.eclipse.emf.db.util;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -16,7 +17,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Properties;
 
 import org.eclipse.core.runtime.Assert;
@@ -41,6 +41,7 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
@@ -508,10 +509,9 @@ public final class DBUtil {
                     try {
                         Method method=att.getEType().getInstanceClass().getMethod("get", int.class); //$NON-NLS-1$
                         obj.eSet(att, method.invoke(null, rSet.getInt(columnIndex)));
-                    } catch (ReflectiveOperationException e) {
+                    } catch (Exception e) {
                         Activator.log(IStatus.ERROR, "Failed to get enum value", e); //$NON-NLS-1$
                     }
-
                 } else {
                     throw new UnsupportedOperationException(att.getEType().getName());
                 }
@@ -727,16 +727,16 @@ public final class DBUtil {
                 else if (att.getEType().equals(EcorePackage.eINSTANCE.getEByteArray()))
                     value=value == null ? null : "x'" + BaseEncoding.base16().encode((byte[]) value) + '\''; //$NON-NLS-1$ 
 
-                values.setProperty(DBQueryUtil.getColumnName(att), Objects.toString(value));
+                values.setProperty(DBQueryUtil.getColumnName(att), Objects.toStringHelper(value).toString());
             }
         }
         for (EReference ref : Iterables.filter(features, EReference.class)) {
             // EReference opposite=ref.getEOpposite();
             if (ref.getUpperBound() != ETypedElement.UNBOUNDED_MULTIPLICITY) {
                 DBObject value=(DBObject) obj.eGet(ref);
-                values.setProperty(DBQueryUtil.getColumnNameExt(ref), Objects.toString((value == null ? null : value.cdoID())));
+                values.setProperty(DBQueryUtil.getColumnNameExt(ref), Objects.toStringHelper((value == null ? null : value.cdoID())).toString());
                 if (DBModelInformationCache.hasInheritance(ref) && ref != obj.eContainmentFeature()) {
-                    values.setProperty(INTERNAL_CLASS.apply(ref), Objects.toString(value == null ? null : cdoInternalClass(value.eClass())));
+                    values.setProperty(INTERNAL_CLASS.apply(ref), Objects.toStringHelper(value == null ? null : cdoInternalClass(value.eClass())).toString());
                     values.setProperty(INTERNAL_CLASS_NAME.apply(ref), value == null ? null : DBQueryUtil.quote(cdoInternalClassName(value.eClass())));
                 }
             }

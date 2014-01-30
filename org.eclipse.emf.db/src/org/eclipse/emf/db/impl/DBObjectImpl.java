@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.db.DBObject;
@@ -25,6 +24,7 @@ import org.eclipse.emf.ecore.ETypedElement;
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
 import org.eclipse.emf.ecore.impl.EObjectImpl;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -167,6 +167,10 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
 
     private <T extends DBObject> T query(LazyLoadingInformation lazyLoadingInformation) throws SQLException {
         EPackage pkg=eClass().getEPackage();
+        if (lazyLoadingInformation.getClazz() == 0){
+            System.err.println("cdo_container_internal_class is NULL (id="+lazyLoadingInformation.getCdoId()+", eclass="+eClass().getName()+")");
+            return null;
+        }
         return DBUtil.query(connection, lazyLoadingInformation.getCdoId(),
                 (Class<T>) DBModelInformationCache.getEClassFromCdoClass(pkg, lazyLoadingInformation.getClazz()).getInstanceClass(), pkg);
     }
@@ -263,11 +267,14 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
             // Handle Detached
             if (newValue == null) {
                 if (oldValue != null) {
-                    if (oldValue instanceof Long) {
-                        DBObject obj=DBUtil.getCache().getIfPresent(oldValue);
-                        if (obj != null)
-                            dbAddDetached(reference, obj);
-                        // System.err.println("Quentin erreur ? pour oldValue=2 avec reference");
+                    if (oldValue instanceof LazyLoadingInformation) {
+                        try {
+                            DBObject obj=query((LazyLoadingInformation)oldValue);
+                            if (obj != null)
+                                dbAddDetached(reference, obj);
+                        } catch (SQLException e) {
+                            throw new RemoteException(e);
+                        }
                     } else {
                         dbAddDetached(reference, (DBObject) oldValue);
                     }
@@ -277,7 +284,7 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
             }
         }
         internalESet(eFeature, newValue);
-        if (!Objects.equals(oldValue, newValue)) {
+        if (!Objects.equal(oldValue, newValue)) {
             eNotify(new ENotificationImpl(this, Notification.SET, eFeature, oldValue, newValue));
             dbSetModified(eFeature);
         }

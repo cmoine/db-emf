@@ -222,7 +222,7 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
 
     @Override
     public void eSet(EStructuralFeature eFeature, Object newValue) {
-        Object oldValue=map().get(eFeature);
+        Object oldValue=eGet(eFeature);
         if (eFeature instanceof EReference) {
             EReference reference=(EReference) eFeature;
             // Handle EOpposite

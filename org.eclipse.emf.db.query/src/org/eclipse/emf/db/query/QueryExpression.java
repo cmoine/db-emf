@@ -278,7 +278,7 @@ public abstract class QueryExpression {
             @Override
             public String toString() {
                 return new StringBuilder(QueryExpression.this.toString())
-                        .append(" BETWEEN ").append(SDF_DAY.format(debut)).append(" IN ").append(SDF_DAY.format(finalFin)).toString(); //$NON-NLS-1$
+                        .append(" BETWEEN ").append(SDF_DAY.format(debut)).append(" AND ").append(SDF_DAY.format(finalFin)).toString(); //$NON-NLS-1$ //$NON-NLS-2$
             }
         };
     }

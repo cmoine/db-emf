@@ -329,7 +329,7 @@ public final class DBUtil {
                 type+='(' + length + ')';
         } else if (attribute.getEType().equals(EcorePackage.eINSTANCE.getEString())) {
             type="longtext"; //$NON-NLS-1$
-        } else if (attribute.getEType().equals(EcorePackage.eINSTANCE.getEBoolean())) {
+        } else if (attribute.getEType().equals(EcorePackage.eINSTANCE.getEBoolean()) || attribute.getEType().equals(EcorePackage.eINSTANCE.getEBooleanObject())) {
             type="tinyint(1)"; //$NON-NLS-1$
         } else if (attribute.getEType().equals(EcorePackage.eINSTANCE.getEInt()) || attribute.getEType().equals(EcorePackage.eINSTANCE.getEIntegerObject())) {
             type="int(11)"; //$NON-NLS-1$
@@ -501,7 +501,7 @@ public final class DBUtil {
                     obj.eSet(att, rSet.getFloat(columnIndex));
                 } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEDouble()) || att.getEType().equals(EcorePackage.eINSTANCE.getEDoubleObject())) {
                     obj.eSet(att, rSet.getDouble(columnIndex));
-                } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEBoolean())) {
+                } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEBoolean()) || att.getEType().equals(EcorePackage.eINSTANCE.getEBooleanObject())) {
                     obj.eSet(att, rSet.getBoolean(columnIndex));
                 } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEByteArray())) {
                     obj.eSet(att, rSet.getBytes(columnIndex));

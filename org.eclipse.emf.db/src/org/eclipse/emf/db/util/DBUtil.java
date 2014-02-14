@@ -331,11 +331,13 @@ public final class DBUtil {
             type="longtext"; //$NON-NLS-1$
         } else if (attribute.getEType().equals(EcorePackage.eINSTANCE.getEBoolean())) {
             type="tinyint(1)"; //$NON-NLS-1$
-        } else if (attribute.getEType().equals(EcorePackage.eINSTANCE.getEInt())) {
+        } else if (attribute.getEType().equals(EcorePackage.eINSTANCE.getEInt()) || attribute.getEType().equals(EcorePackage.eINSTANCE.getEIntegerObject())) {
             type="int(11)"; //$NON-NLS-1$
-        } else if (attribute.getEType().equals(EcorePackage.eINSTANCE.getEFloat())) {
+        } else if (attribute.getEType().equals(EcorePackage.eINSTANCE.getELong()) || attribute.getEType().equals(EcorePackage.eINSTANCE.getELongObject())) {
+            type="bigint(20)"; //$NON-NLS-1$
+        } else if (attribute.getEType().equals(EcorePackage.eINSTANCE.getEFloat()) || attribute.getEType().equals(EcorePackage.eINSTANCE.getEFloatObject())) {
             type="float"; //$NON-NLS-1$
-        } else if (attribute.getEType().equals(EcorePackage.eINSTANCE.getEDouble())) {
+        } else if (attribute.getEType().equals(EcorePackage.eINSTANCE.getEDouble()) || attribute.getEType().equals(EcorePackage.eINSTANCE.getEDoubleObject())) {
             type="double"; //$NON-NLS-1$
         } else if (attribute.getEType().equals(EcorePackage.eINSTANCE.getEByteArray())) {
             type="longblob"; //$NON-NLS-1$
@@ -491,13 +493,13 @@ public final class DBUtil {
                     } else if (date != null) {
                         throw new UnsupportedOperationException();
                     }
-                } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEInt())) {
+                } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEInt()) || att.getEType().equals(EcorePackage.eINSTANCE.getEIntegerObject())) {
                     obj.eSet(att, rSet.getInt(columnIndex));
-                } else if (att.getEType().equals(EcorePackage.eINSTANCE.getELong())) {
+                } else if (att.getEType().equals(EcorePackage.eINSTANCE.getELong()) || att.getEType().equals(EcorePackage.eINSTANCE.getELongObject())) {
                     obj.eSet(att, rSet.getLong(columnIndex));
-                } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEFloat())) {
+                } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEFloat()) || att.getEType().equals(EcorePackage.eINSTANCE.getEFloatObject())) {
                     obj.eSet(att, rSet.getFloat(columnIndex));
-                } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEDouble())) {
+                } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEDouble()) || att.getEType().equals(EcorePackage.eINSTANCE.getEDoubleObject())) {
                     obj.eSet(att, rSet.getDouble(columnIndex));
                 } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEBoolean())) {
                     obj.eSet(att, rSet.getBoolean(columnIndex));

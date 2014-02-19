@@ -5,11 +5,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.emf.db.DBObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
+import org.eclipse.emf.ecore.ETypedElement;
 
 import com.google.common.collect.Iterables;
 
@@ -78,11 +80,22 @@ public abstract class DBRunnable {
             return;
 
         for (EReference ref : dbObject.eClass().getEAllContainments()) {
-            for (DBObject childDBObject : Iterables.filter((List<Object>) dbObject.eGet(ref), DBObject.class))
+            Iterable<Object> values;
+            if (ref.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY)
+                values=(List<Object>) dbObject.eGet(ref);
+            else
+                values=Collections.singleton(dbObject.eGet(ref));
+
+            for (DBObject childDBObject : Iterables.filter(values, DBObject.class))
                 saveDeep(childDBObject, deep - 1);
 
             for (DBObject childDBObject : dbObject.dbDetached(ref))
                 delete(childDBObject);
         }
+        // CME original code
+        // if (!dbObject.eContents().isEmpty() && (deep < 0 || deep >= 1)) {
+        // for (EObject childDBObject : dbObject.eContents())
+        // saveDeep((DBObject) childDBObject, deep - 1);
+        // }
     }
 }

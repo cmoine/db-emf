@@ -39,8 +39,6 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
     private final EReference containmentRef;
     private boolean isModified=true;
 
-    // private Set<EStructuralFeature> modified=Sets.newHashSet(eClass().getEAllStructuralFeatures());
-
     protected DBObjectImpl() {
         map=Maps.newHashMapWithExpectedSize(eClass().getEAllStructuralFeatures().size());
         containmentRef=DBModelInformationCache.getContainerReference(eClass());
@@ -119,23 +117,7 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
                             System.err.println("CONNECTION = NULL - Demander à Christophe => return null;");
                             return null;
                         }
-                        // if (DBModelInformationCache.hasInheritance((EReference) eFeature)) {
                         internalESet(eFeature, value=query((LazyLoadingInformation) value));
-                        // if (eFeature.getName().equals("posologie") && value == null)
-                        // System.out.println("DBObjectImpl.eGet()");
-                        // } else {
-                        // if (connection == null) {
-                        // System.err.println("CONNECTION = NULL - Demander à Christophe => return null;");
-                        // return null;
-                        // } else {
-                        // internalESet(eFeature, value=query((LazyLoadingInformation) value));
-                        // // internalESet(
-                        // // eFeature,
-                        // // value=DBUtil.query(connection, (LazyLoadingInformation) value, (Class<DBObject>) eFeature.getEType().getInstanceClass(),
-                        // // eClass()
-                        // // .getEPackage()));
-                        // }
-                        // }
                     } else if (value == null && ((EReference) eFeature).isContainment() && ((EReference) eFeature).getEOpposite() != null) {
                         DBList values=queryAll(((EReference) eFeature), eFeature);
                         if (values.size() > 1)
@@ -147,17 +129,6 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
                     return value;
                 }
             } else {
-                // if (eFeature.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
-                // String tableName=DBQueryUtil.getTableName((EAttribute) eFeature);
-                // if (connection != null) {
-                // internalESet(
-                // eFeature,
-                // new BasicEList<Object>(DBQueryUtil.queryStrings(connection, "SELECT " + CDODBSchema.LIST_VALUE + " FROM " + tableName
-                // + " WHERE " + CDODBSchema.LIST_REVISION_ID + '=' + cdoID)));
-                // } else {
-                // internalESet(eFeature, new BasicEList<Object>());
-                // }
-                // }
                 return map().get(eFeature);
             }
         } catch (SQLException e) {
@@ -244,15 +215,7 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
                             list.add(this);
                     }
 
-                    // Handle oldValue
-                    // if (oldValue != null) {
-                    // if (oldValue instanceof Long) {
-                    // DBObject obj=DBUtil.getCache().getIfPresent(oldValue);
-                    // if (obj != null)
-                    // ((List<Object>) ((EObject) obj).eGet(opposite)).remove(this);
-                    // } else
-                    // ((List<Object>) ((EObject) oldValue).eGet(opposite)).remove(this);
-                    // }
+                    // TODO Handle oldValue
                 } else {
                     if (newValue == null) {
                         DBObjectImpl obj=(DBObjectImpl) eGet(reference);
@@ -310,23 +273,11 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
 
     public void dbSetModified(EStructuralFeature feature) {
         isModified=true;
-        // if (modified == null)
-        // modified=Sets.newHashSet();
-        // modified.add(feature);
     }
 
     public void dbClearModified() {
         isModified=false;
-        // modified=null;
     }
-
-    // @Override
-    // public Set<EStructuralFeature> dbModified() {
-    // if(isModified) {
-    //
-    // }
-    // return modified;
-    // }
 
     public void dbAddDetached(EReference ref, DBObject obj) {
         if (DBUtil.isStoredInMemory(obj))

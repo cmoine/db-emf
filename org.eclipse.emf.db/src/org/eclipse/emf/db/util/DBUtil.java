@@ -786,7 +786,7 @@ public final class DBUtil {
         return eClass.getName().hashCode();
     }
 
-    public static void delete(Connection connection, DBObject obj) throws SQLException {
+    /* package */static void delete(Connection connection, DBObject obj) throws SQLException {
         Statement stmt=connection.createStatement();
         try {
             stmt.execute("DELETE FROM " + DBQueryUtil.getTableName(obj.eClass()) + " WHERE " + CDODBSchema.ATTRIBUTES_ID + '=' + obj.cdoID());

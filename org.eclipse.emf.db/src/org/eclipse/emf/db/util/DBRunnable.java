@@ -5,10 +5,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import org.eclipse.emf.db.DBObject;
-import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
+
+import com.google.common.collect.Iterables;
 
 public abstract class DBRunnable {
 
@@ -54,7 +57,6 @@ public abstract class DBRunnable {
         saveDeep(dbObject, -1);
     }
 
-
     /**
      * @param dbObject
      *            the {@link DBObject} to save
@@ -71,9 +73,16 @@ public abstract class DBRunnable {
         // QLE deep < 0 pour deep=-1 & deep >=1 si on appel la methode avec un deep > à 1
         if (dbObject.dbIsModified())
             save(dbObject);
-        if (!dbObject.eContents().isEmpty() && (deep < 0 || deep >= 1)) {
-            for (EObject childDBObject : dbObject.eContents())
-                saveDeep((DBObject) childDBObject, deep - 1);
+
+        if (deep == 0)
+            return;
+
+        for (EReference ref : dbObject.eClass().getEAllContainments()) {
+            for (DBObject childDBObject : Iterables.filter((List<Object>) dbObject.eGet(ref), DBObject.class))
+                saveDeep(childDBObject, deep - 1);
+
+            for (DBObject childDBObject : dbObject.dbDetached(ref))
+                delete(childDBObject);
         }
     }
 }

@@ -496,7 +496,7 @@ public final class DBUtil {
                 if (columnIndex == -1) {
                     ((DBObjectImpl) obj).internalSetLazy(att);
                 } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEString())) {
-                    obj.eSet(att, rSet.getString(columnIndex));
+                    ((DBObjectImpl) obj).internalESet(att, rSet.getString(columnIndex));
                 } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEDate())) {
                     Object date=rSet.getObject(columnIndex);
                     if (date instanceof Timestamp) {
@@ -507,21 +507,21 @@ public final class DBUtil {
                         throw new UnsupportedOperationException();
                     }
                 } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEInt()) || att.getEType().equals(EcorePackage.eINSTANCE.getEIntegerObject())) {
-                    obj.eSet(att, rSet.getInt(columnIndex));
+                    ((DBObjectImpl) obj).internalESet(att, rSet.getInt(columnIndex));
                 } else if (att.getEType().equals(EcorePackage.eINSTANCE.getELong()) || att.getEType().equals(EcorePackage.eINSTANCE.getELongObject())) {
-                    obj.eSet(att, rSet.getLong(columnIndex));
+                    ((DBObjectImpl) obj).internalESet(att, rSet.getLong(columnIndex));
                 } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEFloat()) || att.getEType().equals(EcorePackage.eINSTANCE.getEFloatObject())) {
-                    obj.eSet(att, rSet.getFloat(columnIndex));
+                    ((DBObjectImpl) obj).internalESet(att, rSet.getFloat(columnIndex));
                 } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEDouble()) || att.getEType().equals(EcorePackage.eINSTANCE.getEDoubleObject())) {
-                    obj.eSet(att, rSet.getDouble(columnIndex));
+                    ((DBObjectImpl) obj).internalESet(att, rSet.getDouble(columnIndex));
                 } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEBoolean()) || att.getEType().equals(EcorePackage.eINSTANCE.getEBooleanObject())) {
-                    obj.eSet(att, rSet.getBoolean(columnIndex));
+                    ((DBObjectImpl) obj).internalESet(att, rSet.getBoolean(columnIndex));
                 } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEByteArray())) {
-                    obj.eSet(att, rSet.getBytes(columnIndex));
+                    ((DBObjectImpl) obj).internalESet(att, rSet.getBytes(columnIndex));
                 } else if (att.getEType() instanceof EEnum) {
                     try {
                         Method method=att.getEType().getInstanceClass().getMethod("get", int.class); //$NON-NLS-1$
-                        obj.eSet(att, method.invoke(null, rSet.getInt(columnIndex)));
+                        ((DBObjectImpl) obj).internalESet(att, method.invoke(null, rSet.getInt(columnIndex)));
                     } catch (Exception e) {
                         Activator.log(IStatus.ERROR, "Failed to get enum value", e); //$NON-NLS-1$
                     }

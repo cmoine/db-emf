@@ -181,7 +181,7 @@ public abstract class QueryExpression {
         return new QueryExpression() {
             @Override
             public String toString() {
-                return new StringBuilder("MIN(").append(QueryExpression.this.toString()).append(')').toString();
+                return new StringBuilder("MIN(").append(QueryExpression.this.toString()).append(')').toString(); //$NON-NLS-1$
             }
         };
     }
@@ -190,7 +190,7 @@ public abstract class QueryExpression {
         return new QueryExpression() {
             @Override
             public String toString() {
-                return new StringBuilder("MAX(").append(QueryExpression.this.toString()).append(')').toString();
+                return new StringBuilder("MAX(").append(QueryExpression.this.toString()).append(')').toString(); //$NON-NLS-1$
             }
         };
     }
@@ -199,7 +199,7 @@ public abstract class QueryExpression {
         return new QueryExpression() {
             @Override
             public String toString() {
-                return new StringBuilder("SUM(").append(QueryExpression.this.toString()).append(')').toString();
+                return new StringBuilder("SUM(").append(QueryExpression.this.toString()).append(')').toString(); //$NON-NLS-1$
             }
         };
     }
@@ -208,7 +208,7 @@ public abstract class QueryExpression {
         return new QueryExpression() {
             @Override
             public String toString() {
-                return new StringBuilder("NOT ").append(QueryExpression.this.toString()).toString();
+                return new StringBuilder("NOT ").append(QueryExpression.this.toString()).toString(); //$NON-NLS-1$
             }
         };
     }
@@ -217,7 +217,7 @@ public abstract class QueryExpression {
         return new QueryExpression() {
             @Override
             public String toString() {
-                return new StringBuilder('(').append(QueryExpression.this.toString()).append(" AND ").append(expr.toString()).toString();
+                return new StringBuilder().append('(').append(QueryExpression.this.toString()).append(" AND ").append(expr.toString()).append(')').toString(); //$NON-NLS-1$
             }
         };
     }
@@ -226,7 +226,7 @@ public abstract class QueryExpression {
         return new QueryExpression() {
             @Override
             public String toString() {
-                return new StringBuilder('(').append(QueryExpression.this.toString()).append(" OR ").append(expr.toString()).toString();
+                return new StringBuilder().append('(').append(QueryExpression.this.toString()).append(" OR ").append(expr.toString()).append(')').toString(); //$NON-NLS-1$
             }
         };
     }
@@ -235,7 +235,7 @@ public abstract class QueryExpression {
         return new QueryExpression() {
             @Override
             public String toString() {
-                return new StringBuilder('(').append(QueryExpression.this.toString()).append('<').append(expr.toString()).toString();
+                return new StringBuilder().append('(').append(QueryExpression.this.toString()).append('<').append(expr.toString()).append(')').toString();
             }
         };
     }
@@ -244,7 +244,7 @@ public abstract class QueryExpression {
         return new QueryExpression() {
             @Override
             public String toString() {
-                return new StringBuilder('(').append(QueryExpression.this.toString()).append('>').append(expr.toString()).toString();
+                return new StringBuilder().append('(').append(QueryExpression.this.toString()).append('>').append(expr.toString()).append(')').toString();
             }
         };
     }
@@ -253,7 +253,7 @@ public abstract class QueryExpression {
         return new QueryExpression() {
             @Override
             public String toString() {
-                return new StringBuilder('(').append(QueryExpression.this.toString()).append('=').append(expr.toString()).toString();
+                return new StringBuilder().append('(').append(QueryExpression.this.toString()).append('=').append(expr.toString()).append(')').toString();
             }
         };
     }
@@ -262,7 +262,7 @@ public abstract class QueryExpression {
         return new QueryExpression() {
             @Override
             public String toString() {
-                return new StringBuilder('(').append(QueryExpression.this.toString()).append("<=").append(expr.toString()).toString(); //$NON-NLS-1$
+                return new StringBuilder().append('(').append(QueryExpression.this.toString()).append("<=").append(expr.toString()).append(')').toString(); //$NON-NLS-1$
             }
         };
     }
@@ -271,7 +271,7 @@ public abstract class QueryExpression {
         return new QueryExpression() {
             @Override
             public String toString() {
-                return new StringBuilder('(').append(QueryExpression.this.toString()).append(">=").append(expr.toString()).toString(); //$NON-NLS-1$
+                return new StringBuilder().append('(').append(QueryExpression.this.toString()).append(">=").append(expr.toString()).append(')').toString(); //$NON-NLS-1$
             }
         };
     }

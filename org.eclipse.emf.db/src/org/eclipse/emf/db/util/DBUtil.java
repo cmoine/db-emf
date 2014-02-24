@@ -500,9 +500,9 @@ public final class DBUtil {
                 } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEDate())) {
                     Object date=rSet.getObject(columnIndex);
                     if (date instanceof Timestamp) {
-                        obj.eSet(att, new java.util.Date(((Timestamp) date).getTime()));
+                        ((DBObjectImpl) obj).internalESet(att, new java.util.Date(((Timestamp) date).getTime()));
                     } else if (date instanceof java.sql.Date) {
-                        obj.eSet(att, new java.util.Date(((java.sql.Date) date).getTime()));
+                        ((DBObjectImpl) obj).internalESet(att, new java.util.Date(((java.sql.Date) date).getTime()));
                     } else if (date != null) {
                         throw new UnsupportedOperationException();
                     }

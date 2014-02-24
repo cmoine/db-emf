@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -351,17 +352,24 @@ public final class DBUtil {
         return MessageFormat.format("`{0}` {1} NULL DEFAULT NULL", columnName, type); //$NON-NLS-1$
     }
 
-    /**
-     * QLE : to use this method place your method in {@link ModelQueryUtil}
-     */
     public static <T extends DBObject> List<T> getAll(Connection view, Class<T> c, EPackage pkg, String queryString) throws SQLException {
+        return getAll(view, c, pkg, queryString, null, null);
+    }
+
+    public static <T extends DBObject> List<T> getAll(Connection view, Class<T> c, EPackage pkg, String queryString, String taskName, IProgressMonitor monitor)
+            throws SQLException {
         Statement stmt=view.createStatement();
         try {
             ResultSet rSet=stmt.executeQuery(queryString);
             if (rSet.last()) {
-                List<T> result=Lists.newArrayListWithCapacity(rSet.getRow());
+                int size=rSet.getRow();
+                List<T> result=Lists.newArrayListWithCapacity(size);
+                if (taskName != null && monitor != null)
+                    monitor.beginTask(taskName, size);
                 rSet.beforeFirst();
                 Map<String, Integer> mapping=null;
+                if (size > 1)
+                    mapping=new HashMap<String, Integer>();
                 EClass eClass=DBModelInformationCache.getEClass(pkg, c);
                 while (rSet.next()) {
                     // EClass eClass=ModelUtil.ECLASSES.get(c);
@@ -373,9 +381,13 @@ public final class DBUtil {
                         putObjectInCache(item);
                     }
 
-                    mapping=fetch2(rSet, item, mapping);
+                    mapping=fetchWithoutId(rSet, item, mapping);
                     result.add(item);
+                    if (taskName != null && monitor != null)
+                        monitor.worked(1);
                 }
+                if (taskName != null && monitor != null)
+                    monitor.done();
                 return Collections.unmodifiableList(result);
             } else {
                 return Collections.emptyList();
@@ -467,11 +479,10 @@ public final class DBUtil {
 
     private static Map<String, Integer> fetch(ResultSet rSet, DBObject obj, Map<String, Integer> mapping) throws SQLException {
         ((DBObjectImpl) obj).setCdoID(rSet.getLong(CDODBSchema.ATTRIBUTES_ID));
-        return fetch2(rSet, obj, mapping);
+        return fetchWithoutId(rSet, obj, mapping);
     }
 
-    private static Map<String, Integer> fetch2(ResultSet rSet, DBObject obj, Map<String, Integer> mapping) throws SQLException {
-        // ((DBObjectImpl) obj).setCdoID(rSet.getLong(CDODBSchema.ATTRIBUTES_ID));
+    private static Map<String, Integer> fetchWithoutId(ResultSet rSet, DBObject obj, Map<String, Integer> mapping) throws SQLException {
         obj.cdoSetResource(getResource(rSet.getStatement().getConnection(), rSet.getLong(CDODBSchema.ATTRIBUTES_RESOURCE)));
         ((DBObjectImpl) obj).setRevision(rSet.getLong(CDODBSchema.ATTRIBUTES_CREATED));
         ((DBObjectImpl) obj).setConnection(rSet.getStatement().getConnection());
@@ -480,9 +491,11 @@ public final class DBUtil {
         for (EAttribute att : obj.eClass().getEAllAttributes()) {
             if (att.getUpperBound() != ETypedElement.UNBOUNDED_MULTIPLICITY) {
                 String column=DBQueryUtil.getColumnName(att);
-                Integer columnIndex=findColumnIndex(rSet, mapping, column);
+                int columnIndex=findColumnIndex(rSet, mapping, column);
 
-                if (att.getEType().equals(EcorePackage.eINSTANCE.getEString())) {
+                if (columnIndex == -1) {
+                    ((DBObjectImpl) obj).internalSetLazy(att);
+                } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEString())) {
                     obj.eSet(att, rSet.getString(columnIndex));
                 } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEDate())) {
                     Object date=rSet.getObject(columnIndex);
@@ -522,6 +535,9 @@ public final class DBUtil {
             if (ref.getUpperBound() == 1 /* && !ref.isContainment() */) {
                 // 0..1
                 int columnIndex=findColumnIndex(rSet, mapping, DBQueryUtil.getColumnNameExt(ref));
+                if (columnIndex == -1)
+                    throw new UnsupportedOperationException("No lazy value supported for EReference"); //$NON-NLS-1$
+
                 Long cdoId=rSet.getLong(columnIndex);
                 if (cdoId == 0L || cdoId == null) {
                     ((DBObjectImpl) obj).map().put(ref, null);
@@ -555,14 +571,22 @@ public final class DBUtil {
         return mapping;
     }
 
-    private static Integer findColumnIndex(ResultSet rSet, Map<String, Integer> mapping, String column) throws SQLException {
+    private static int findColumnIndex(ResultSet rSet, Map<String, Integer> mapping, String column) throws SQLException {
         Integer columnIndex;
         if (mapping == null) {
-            columnIndex=rSet.findColumn(column);
+            try {
+                columnIndex=rSet.findColumn(column);
+            } catch (SQLException e) {
+                columnIndex=-1;
+            }
         } else {
             columnIndex=mapping.get(column);
             if (columnIndex == null) {
-                columnIndex=rSet.findColumn(column);
+                try {
+                    columnIndex=rSet.findColumn(column);
+                } catch (SQLException e) {
+                    columnIndex=-1;
+                }
                 mapping.put(column, columnIndex);
             }
         }

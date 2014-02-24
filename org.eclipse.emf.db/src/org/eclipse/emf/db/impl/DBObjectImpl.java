@@ -4,8 +4,10 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.db.DBObject;
@@ -129,11 +131,26 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
                     return value;
                 }
             } else {
-                return map().get(eFeature);
+                // EAttribute
+                Object value=map().get(eFeature);
+                if (value == LazyValue.INSTANCE)
+                    loadLazyValues();
+                return value;
             }
         } catch (SQLException e) {
             throw new RemoteException(e);
         }
+    }
+
+    private void loadLazyValues() throws SQLException {
+        // Clear all lazy values
+        for (Iterator<Entry<EStructuralFeature, Object>> iterator=map.entrySet().iterator(); iterator.hasNext();) {
+            Entry<EStructuralFeature, Object> entry=iterator.next();
+            if (entry.getValue() == LazyValue.INSTANCE) {
+                iterator.remove();
+            }
+        }
+        DBUtil.reload(connection, this);
     }
 
     private <T extends DBObject> T query(LazyLoadingInformation lazyLoadingInformation) throws SQLException {
@@ -197,60 +214,77 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
 
     @Override
     public void eSet(EStructuralFeature eFeature, Object newValue) {
-        Object oldValue=eGet(eFeature);
-        if (eFeature instanceof EReference) {
-            EReference reference=(EReference) eFeature;
-            // Handle EOpposite
-            EReference opposite=reference.getEOpposite();
-            if (opposite != null) {
-                if (opposite.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
-                    // Handle newValue
-                    if (newValue == null) {
-                        DBObjectImpl obj=(DBObjectImpl) eGet(reference);
-                        if (obj != null)
-                            ((List<?>) obj.eGet(opposite)).remove(this);
-                    } else {
-                        List<Object> list=((List<Object>) ((EObject) newValue).eGet(opposite));
-                        if (!list.contains(this))
-                            list.add(this);
-                    }
-
-                    // TODO Handle oldValue
-                } else {
-                    if (newValue == null) {
-                        DBObjectImpl obj=(DBObjectImpl) eGet(reference);
-                        if (obj != null)
-                            obj.internalESet(opposite, null);
-                    } else {
-                        ((DBObjectImpl) newValue).internalESet(opposite, this);
-                    }
-                }
-            }
-
-            // Handle Detached
-            if (newValue == null) {
-                if (oldValue != null) {
-                    if (oldValue instanceof LazyLoadingInformation) {
-                        try {
-                            DBObject obj=query((LazyLoadingInformation)oldValue);
+        if (map().get(eFeature) == LazyValue.INSTANCE) {
+            // No notifications
+            internalESet(eFeature, newValue);
+        } else {
+            // Notify
+            Object oldValue=eGet(eFeature);
+            if (eFeature instanceof EReference) {
+                EReference reference=(EReference) eFeature;
+                // Handle EOpposite
+                EReference opposite=reference.getEOpposite();
+                if (opposite != null) {
+                    if (opposite.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
+                        // Handle newValue
+                        if (newValue == null) {
+                            DBObjectImpl obj=(DBObjectImpl) eGet(reference);
                             if (obj != null)
-                                dbAddDetached(reference, obj);
-                        } catch (SQLException e) {
-                            throw new RemoteException(e);
+                                ((List<?>) obj.eGet(opposite)).remove(this);
+                        } else {
+                            List<Object> list=((List<Object>) ((EObject) newValue).eGet(opposite));
+                            if (!list.contains(this))
+                                list.add(this);
                         }
+
+                        // TODO Handle oldValue
                     } else {
-                        dbAddDetached(reference, (DBObject) oldValue);
+                        if (newValue == null) {
+                            DBObjectImpl obj=(DBObjectImpl) eGet(reference);
+                            if (obj != null)
+                                obj.internalESet(opposite, null);
+                        } else {
+                            ((DBObjectImpl) newValue).internalESet(opposite, this);
+                        }
                     }
                 }
-            } else {
-                dbRemoveDetached(reference, (DBObject) newValue);
+
+                // Handle Detached
+                if (newValue == null) {
+                    if (oldValue != null) {
+                        if (oldValue instanceof LazyLoadingInformation) {
+                            try {
+                                DBObject obj=query((LazyLoadingInformation) oldValue);
+                                if (obj != null)
+                                    dbAddDetached(reference, obj);
+                            } catch (SQLException e) {
+                                throw new RemoteException(e);
+                            }
+                        } else {
+                            dbAddDetached(reference, (DBObject) oldValue);
+                        }
+                    }
+                } else {
+                    dbRemoveDetached(reference, (DBObject) newValue);
+                }
+            }
+            internalESet(eFeature, newValue);
+            if (!Objects.equal(oldValue, newValue)) {
+                eNotify(new ENotificationImpl(this, Notification.SET, eFeature, oldValue, newValue));
+                dbSetModified(eFeature);
             }
         }
-        internalESet(eFeature, newValue);
-        if (!Objects.equal(oldValue, newValue)) {
-            eNotify(new ENotificationImpl(this, Notification.SET, eFeature, oldValue, newValue));
-            dbSetModified(eFeature);
+    }
+
+    private static class LazyValue {
+        public static final LazyValue INSTANCE=new LazyValue();
+
+        private LazyValue() {
         }
+    }
+
+    public void internalSetLazy(EAttribute eFeature) {
+        internalESet(eFeature, LazyValue.INSTANCE);
     }
 
     public void internalESet(EStructuralFeature eFeature, Object newValue) {

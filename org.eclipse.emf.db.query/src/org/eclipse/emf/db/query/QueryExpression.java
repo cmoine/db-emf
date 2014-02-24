@@ -195,6 +195,15 @@ public abstract class QueryExpression {
         };
     }
 
+    public QueryExpression sum() {
+        return new QueryExpression() {
+            @Override
+            public String toString() {
+                return new StringBuilder("SUM(").append(QueryExpression.this.toString()).append(')').toString();
+            }
+        };
+    }
+
     public QueryExpression not() {
         return new QueryExpression() {
             @Override

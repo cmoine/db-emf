@@ -20,11 +20,11 @@ public abstract class QueryExpression {
     @Override
     public abstract String toString();
 
-    public static QueryExpression from(DBObject obj) {
-        return from(obj.cdoID());
+    public static QueryExpression adapt(DBObject obj) {
+        return adapt(obj.cdoID());
     }
 
-    public static QueryExpression from(final boolean b) {
+    public static QueryExpression adapt(final boolean b) {
         return new QueryExpression() {
             @Override
             public String toString() {
@@ -33,7 +33,7 @@ public abstract class QueryExpression {
         };
     }
 
-    public static QueryExpression from(final double d) {
+    public static QueryExpression adapt(final double d) {
         return new QueryExpression() {
             @Override
             public String toString() {
@@ -42,7 +42,7 @@ public abstract class QueryExpression {
         };
     }
 
-    public static QueryExpression from(final float f) {
+    public static QueryExpression adapt(final float f) {
         return new QueryExpression() {
             @Override
             public String toString() {
@@ -51,7 +51,7 @@ public abstract class QueryExpression {
         };
     }
 
-    public static QueryExpression from(final long l) {
+    public static QueryExpression adapt(final long l) {
         return new QueryExpression() {
             @Override
             public String toString() {
@@ -60,7 +60,7 @@ public abstract class QueryExpression {
         };
     }
 
-    public static QueryExpression from(final int i) {
+    public static QueryExpression adapt(final int i) {
         return new QueryExpression() {
             @Override
             public String toString() {
@@ -69,7 +69,7 @@ public abstract class QueryExpression {
         };
     }
 
-    public static QueryExpression from(final String str) {
+    public static QueryExpression adapt(final String str) {
         return new QueryExpression() {
             @Override
             public String toString() {
@@ -78,7 +78,7 @@ public abstract class QueryExpression {
         };
     }
 
-    public static QueryExpression from(final Date date) {
+    public static QueryExpression adapt(final Date date) {
         return new QueryExpression() {
             @Override
             public String toString() {
@@ -113,7 +113,7 @@ public abstract class QueryExpression {
                 for (DBObject dbObject : dbObjects) {
                     if (buf.length() > 0)
                         buf.append(',');
-                    buf.append(from(dbObject));
+                    buf.append(adapt(dbObject));
                 }
                 return QueryExpression.this.toString() + " IN (" + buf + ')';
             }
@@ -174,7 +174,7 @@ public abstract class QueryExpression {
             public String toString() {
                 return DBUtil.internalClass(ref);
             }
-        }.eq(from(DBUtil.cdoInternalClass(clazz)));
+        }.eq(adapt(DBUtil.cdoInternalClass(clazz)));
     }
 
     public QueryExpression min() {

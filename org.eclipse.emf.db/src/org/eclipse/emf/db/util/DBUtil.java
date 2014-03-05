@@ -503,7 +503,9 @@ public final class DBUtil {
                         ((DBObjectImpl) obj).internalESet(att, new java.util.Date(((Timestamp) date).getTime()));
                     } else if (date instanceof java.sql.Date) {
                         ((DBObjectImpl) obj).internalESet(att, new java.util.Date(((java.sql.Date) date).getTime()));
-                    } else if (date != null) {
+                    } else if (date == null) {
+                        ((DBObjectImpl) obj).internalESet(att, null);
+                    } else {
                         throw new UnsupportedOperationException();
                     }
                 } else if (att.getEType().equals(EcorePackage.eINSTANCE.getEInt()) || att.getEType().equals(EcorePackage.eINSTANCE.getEIntegerObject())) {

@@ -440,6 +440,7 @@ public final class DBUtil {
                 while (rSet.next()) {
                     resources.put(resourceId, Strings.nullToEmpty(rSet.getString(1)));
                 }
+                // FIXME QLE
                 if (!resources.containsKey(resourceId)) {
                     resources.put(resourceId, null);
                     System.err.println("No Resource found for resourceId= " + resourceId + " => NULL associated.");
@@ -452,6 +453,7 @@ public final class DBUtil {
     }
 
     private static Long getResourceId(Connection con, String resource) throws SQLException {
+        // FIXME QLE
         if (resource == null || resource.trim().isEmpty()) {
             System.err.println("No Resource found for resource= " + resource + " => NULL associated.");
             return Long.MIN_VALUE;

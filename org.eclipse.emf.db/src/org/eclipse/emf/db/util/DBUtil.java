@@ -51,6 +51,7 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.io.BaseEncoding;
 
 public final class DBUtil {
@@ -63,7 +64,7 @@ public final class DBUtil {
 
     private static final SimpleDateFormat MYSQL_DATE_FORMAT=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); //$NON-NLS-1$
 
-    private static BiMap<Long, String> resources=HashBiMap.create();
+    private static BiMap<Long, String> resources=Maps.synchronizedBiMap(HashBiMap.<Long, String> create());
 
     private static final Function<EReference, String> INTERNAL_CLASS=new Function<EReference, String>() {
         @Override
@@ -439,6 +440,10 @@ public final class DBUtil {
                 while (rSet.next()) {
                     resources.put(resourceId, Strings.nullToEmpty(rSet.getString(1)));
                 }
+                if (!resources.containsKey(resourceId)) {
+                    resources.put(resourceId, null);
+                    System.err.println("No Resource found for resourceId= " + resourceId + " => NULL associated.");
+                }
             } finally {
                 stmt.close();
             }
@@ -447,6 +452,10 @@ public final class DBUtil {
     }
 
     private static Long getResourceId(Connection con, String resource) throws SQLException {
+        if (resource == null || resource.trim().isEmpty()) {
+            System.err.println("No Resource found for resource= " + resource + " => NULL associated.");
+            return Long.MIN_VALUE;
+        }
         if (!resources.containsValue(resource)) {
             Statement stmt=con.createStatement();
             try {

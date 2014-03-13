@@ -11,11 +11,11 @@ public interface DBObject extends EObject {
 
     public Connection cdoView();
 
-    public String cdoResource();
+    // public String cdoResource();
 
     public long cdoRevision();
 
-    public void cdoSetResource(String path);
+    // public void cdoSetResource(String path);
 
     /**
      * @return true if this object was modified since the last load from DB. Return always true is the object has not being persisted at all.

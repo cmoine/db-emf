@@ -42,16 +42,12 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
-import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.BiMap;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.io.BaseEncoding;
 
 public final class DBUtil {
@@ -64,7 +60,7 @@ public final class DBUtil {
 
     private static final SimpleDateFormat MYSQL_DATE_FORMAT=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); //$NON-NLS-1$
 
-    private static BiMap<Long, String> resources=Maps.synchronizedBiMap(HashBiMap.<Long, String> create());
+    // private static BiMap<Long, String> resources=Maps.synchronizedBiMap(HashBiMap.<Long, String> create());
 
     private static final Function<EReference, String> INTERNAL_CLASS=new Function<EReference, String>() {
         @Override
@@ -90,7 +86,7 @@ public final class DBUtil {
 
     public static void clearObjectCache() {
         objects.invalidateAll();
-        resources.clear();
+        // resources.clear();
     }
 
     private static ThreadLocal<Boolean> canSave=new ThreadLocal<Boolean>() {
@@ -413,7 +409,7 @@ public final class DBUtil {
         return result;
     }
 
-    private static long key(DBObject obj) {
+    public static long key(DBObject obj) {
         return key(obj.eClass(), obj.cdoID());
     }
 
@@ -432,45 +428,45 @@ public final class DBUtil {
         objects.put(key, dbObject);
     }
 
-    private static String getResource(Connection con, Long resourceId) throws SQLException {
-        if (!resources.containsKey(resourceId)) {
-            Statement stmt=con.createStatement();
-            try {
-                ResultSet rSet=stmt.executeQuery("SELECT name FROM cdoresource WHERE " + CDODBSchema.ATTRIBUTES_ID + '=' + resourceId);
-                while (rSet.next()) {
-                    resources.put(resourceId, Strings.nullToEmpty(rSet.getString(1)));
-                }
-                // FIXME QLE
-                if (!resources.containsKey(resourceId)) {
-                    resources.put(resourceId, null);
-                    System.err.println("No Resource found for resourceId= " + resourceId + " => NULL associated.");
-                }
-            } finally {
-                stmt.close();
-            }
-        }
-        return resources.get(resourceId);
-    }
-
-    private static Long getResourceId(Connection con, String resource) throws SQLException {
-        // FIXME QLE
-        if (resource == null || resource.trim().isEmpty()) {
-            System.err.println("No Resource found for resource= " + resource + " => NULL associated.");
-            return Long.MIN_VALUE;
-        }
-        if (!resources.containsValue(resource)) {
-            Statement stmt=con.createStatement();
-            try {
-                ResultSet rSet=stmt.executeQuery("SELECT " + CDODBSchema.ATTRIBUTES_ID + " FROM cdoresource WHERE name='" + resource + '\'');
-                while (rSet.next()) {
-                    resources.put(rSet.getLong(1), resource);
-                }
-            } finally {
-                stmt.close();
-            }
-        }
-        return resources.inverse().get(resource);
-    }
+    // private static String getResource(Connection con, Long resourceId) throws SQLException {
+    // if (!resources.containsKey(resourceId)) {
+    // Statement stmt=con.createStatement();
+    // try {
+    // ResultSet rSet=stmt.executeQuery("SELECT name FROM cdoresource WHERE " + CDODBSchema.ATTRIBUTES_ID + '=' + resourceId);
+    // while (rSet.next()) {
+    // resources.put(resourceId, Strings.nullToEmpty(rSet.getString(1)));
+    // }
+    // // FIXME QLE
+    // if (!resources.containsKey(resourceId)) {
+    // resources.put(resourceId, null);
+    // System.err.println("No Resource found for resourceId= " + resourceId + " => NULL associated.");
+    // }
+    // } finally {
+    // stmt.close();
+    // }
+    // }
+    // return resources.get(resourceId);
+    // }
+    //
+    // private static Long getResourceId(Connection con, String resource) throws SQLException {
+    // // FIXME QLE
+    // if (resource == null || resource.trim().isEmpty()) {
+    // System.err.println("No Resource found for resource= " + resource + " => NULL associated.");
+    // return Long.MIN_VALUE;
+    // }
+    // if (!resources.containsValue(resource)) {
+    // Statement stmt=con.createStatement();
+    // try {
+    // ResultSet rSet=stmt.executeQuery("SELECT " + CDODBSchema.ATTRIBUTES_ID + " FROM cdoresource WHERE name='" + resource + '\'');
+    // while (rSet.next()) {
+    // resources.put(rSet.getLong(1), resource);
+    // }
+    // } finally {
+    // stmt.close();
+    // }
+    // }
+    // return resources.inverse().get(resource);
+    // }
 
     public static void reload(Connection con, DBObject obj) throws SQLException {
         reload(con, obj, obj.cdoID());
@@ -494,7 +490,7 @@ public final class DBUtil {
     }
 
     private static Map<String, Integer> fetchWithoutId(ResultSet rSet, DBObject obj, Map<String, Integer> mapping) throws SQLException {
-        obj.cdoSetResource(getResource(rSet.getStatement().getConnection(), rSet.getLong(CDODBSchema.ATTRIBUTES_RESOURCE)));
+        // obj.cdoSetResource(getResource(rSet.getStatement().getConnection(), rSet.getLong(CDODBSchema.ATTRIBUTES_RESOURCE)));
         ((DBObjectImpl) obj).setRevision(rSet.getLong(CDODBSchema.ATTRIBUTES_CREATED));
         ((DBObjectImpl) obj).setConnection(rSet.getStatement().getConnection());
 
@@ -727,6 +723,16 @@ public final class DBUtil {
         listeners.remove(listener);
     }
 
+    private static void fireDeleted(DBObject obj) {
+        for (IDBListener listener : listeners) {
+            try {
+                listener.deleted(obj);
+            } catch (Throwable t) {
+                Activator.log(IStatus.ERROR, "Internal error while notifying modification", t); //$NON-NLS-1$
+            }
+        }
+    }
+
     private static void fireModified(DBObject obj) {
         for (IDBListener listener : listeners) {
             try {
@@ -780,17 +786,17 @@ public final class DBUtil {
         }
         long newRevision=System.currentTimeMillis();
         values.setProperty(CDODBSchema.ATTRIBUTES_CREATED, Long.toString(newRevision));
-        if (obj.cdoResource() != null) {
-            Long res=getResourceId(connection, obj.cdoResource());
-            if (res == null) {
-                stmt.executeUpdate("INSERT INTO cdoresource (name) VALUES ('" + obj.cdoResource() + "')", Statement.RETURN_GENERATED_KEYS);
-                ResultSet generatedKeys=stmt.getGeneratedKeys();
-                generatedKeys.next();
-                res=generatedKeys.getLong(1);
-                resources.put(res, obj.cdoResource());
-            }
-            values.setProperty(CDODBSchema.ATTRIBUTES_RESOURCE, Long.toString(res));
-        }
+        // if (obj.cdoResource() != null) {
+        // Long res=getResourceId(connection, obj.cdoResource());
+        // if (res == null) {
+        // stmt.executeUpdate("INSERT INTO cdoresource (name) VALUES ('" + obj.cdoResource() + "')", Statement.RETURN_GENERATED_KEYS);
+        // ResultSet generatedKeys=stmt.getGeneratedKeys();
+        // generatedKeys.next();
+        // res=generatedKeys.getLong(1);
+        // resources.put(res, obj.cdoResource());
+        // }
+        // values.setProperty(CDODBSchema.ATTRIBUTES_RESOURCE, Long.toString(res));
+        // }
         if (obj.eContainer() != null) {
             DBObject eContainer=((DBObject) obj.eContainer());
             Assert.isTrue(DBUtil.isStoredInDB(eContainer), "You must commit parent before");
@@ -853,12 +859,13 @@ public final class DBUtil {
                 }
             }
 
+            fireDeleted(obj);
             // On desactive l objet
             objects.invalidate(key(obj));
             ((DBObjectImpl) obj).setCdoID(-1);
             ((DBObjectImpl) obj).setConnection(null);
             // ((DBObjectImpl) obj).map().clear();
-            ((DBObjectImpl) obj).cdoSetResource(null);
+            // ((DBObjectImpl) obj).cdoSetResource(null);
             ((DBObjectImpl) obj).setRevision(-1L);
 
             connection.commit();
@@ -933,8 +940,11 @@ public final class DBUtil {
         return INTERNAL_CLASS.apply(ref);
     }
 
-    @Deprecated
-    public static Cache<Long, DBObject> getCache() {
-        return objects;
+    // @Deprecated
+    // public static Cache<Long, DBObject> getCache() {
+    // return objects;
+    // }
+    public static DBObject getInCache(long value) {
+        return objects.getIfPresent(value);
     }
 }

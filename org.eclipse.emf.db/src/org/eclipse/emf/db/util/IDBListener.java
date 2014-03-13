@@ -6,4 +6,6 @@ public interface IDBListener {
     public void created(DBObject object);
 
     public void modified(DBObject object);
+
+    public void deleted(DBObject object);
 }

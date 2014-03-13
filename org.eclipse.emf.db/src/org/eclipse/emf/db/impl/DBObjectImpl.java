@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.eclipse.emf.common.notify.Notification;
+import org.eclipse.emf.common.util.BasicEList;
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.db.DBObject;
 import org.eclipse.emf.db.RemoteException;
 import org.eclipse.emf.db.util.DBModelInformationCache;
@@ -34,7 +36,7 @@ import com.google.common.collect.Multimap;
 public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
     private long cdoID=-1;
     private Connection connection;
-    private String cdoResource;
+    // private String cdoResource;
     private long cdoRevision=0;
     private final Map<EStructuralFeature, Object> map;
     private Multimap<EReference, DBObject> detached;
@@ -74,10 +76,10 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
         return connection;
     }
 
-    @Override
-    public String cdoResource() {
-        return cdoResource;
-    }
+    // @Override
+    // public String cdoResource() {
+    // return cdoResource;
+    // }
 
     @Override
     public long cdoRevision() {
@@ -88,10 +90,10 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
         this.cdoRevision=cdoRevision;
     }
 
-    @Override
-    public void cdoSetResource(String cdoResource) {
-        this.cdoResource=cdoResource;
-    }
+    // @Override
+    // public void cdoSetResource(String cdoResource) {
+    // this.cdoResource=cdoResource;
+    // }
 
     @Override
     public Object eGet(EStructuralFeature eFeature, boolean resolve, boolean coreType) {
@@ -338,5 +340,17 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
             return Collections.emptyList();
         else
             return detached.get(ref);
+    }
+
+    @Override
+    public EList<EObject> eContents() {
+        // For Quentine to respect EMF contract
+        EList<EObject> result=new BasicEList<EObject>();
+        for (EReference ref : eClass().getEAllContainments()) {
+            if (ref.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
+                result.addAll((Collection<? extends EObject>) eGet(ref));
+            }
+        }
+        return result;
     }
 }

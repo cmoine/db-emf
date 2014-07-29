@@ -133,8 +133,10 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
             } else {
                 // EAttribute
                 Object value=map().get(eFeature);
-                if (value == LazyValue.INSTANCE)
+                if (value == LazyValue.INSTANCE) {
                     loadLazyValues();
+                    value=map().get(eFeature);
+                }
                 return value;
             }
         } catch (SQLException e) {

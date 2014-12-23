@@ -545,7 +545,12 @@ public final class DBUtil {
         }
         // Copy EReferences
         for (EReference ref : obj.eClass().getEAllReferences()) {
-            if (ref.getUpperBound() == 1 /* && !ref.isContainment() */) {
+        	if (ref.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
+                // Resets the reference to allows all clients (connected to the server) to update
+                // local DBObjects.
+                ((DBObjectImpl) obj).map().put(ref, null);
+            }
+            else if (ref.getUpperBound() == 1 /* && !ref.isContainment() */) {
                 // 0..1
                 int columnIndex=findColumnIndex(rSet, mapping, DBQueryUtil.getColumnNameExt(ref));
                 if (columnIndex == -1)

@@ -788,10 +788,21 @@ public final class DBUtil {
         if (obj.cdoResource() != null) {
             Long res=getResourceId(connection, obj.cdoResource());
             if (res == null) {
-                stmt.executeUpdate("INSERT INTO cdoresource (name) VALUES ('" + obj.cdoResource() + "')", Statement.RETURN_GENERATED_KEYS);
-                ResultSet generatedKeys=stmt.getGeneratedKeys();
-                generatedKeys.next();
-                res=generatedKeys.getLong(1);
+                try {
+                    stmt.executeUpdate("INSERT INTO cdoresource (name) VALUES ('" + obj.cdoResource() + "')", Statement.RETURN_GENERATED_KEYS); //$NON-NLS-1$ //$NON-NLS-2$
+                    ResultSet generatedKeys=stmt.getGeneratedKeys();
+                    generatedKeys.next();
+                    res=generatedKeys.getLong(1);
+                } catch (SQLException e) {
+                    ResultSet rSet=stmt.executeQuery("SELECT max(cdo_id) FROM cdoresource"); //$NON-NLS-1$
+                    if (rSet.next()) {
+                        long newCdoId=(rSet.getLong(1) + 1);
+                        String sql="INSERT INTO cdoresource (cdo_id, name, cdo_version, cdo_created, cdo_revised, cdo_resource, cdo_container, cdo_feature) VALUES ('" //$NON-NLS-1$
+                                + newCdoId + "', '" + obj.cdoResource() + "', '1', '" + newRevision + "', '0', '0', '0', '0')"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        stmt.executeUpdate(sql);
+                        res=newCdoId;
+                    }
+                }
                 resources.put(res, obj.cdoResource());
             }
             values.setProperty(CDODBSchema.ATTRIBUTES_RESOURCE, Long.toString(res));

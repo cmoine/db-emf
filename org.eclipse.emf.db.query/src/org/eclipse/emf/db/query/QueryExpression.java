@@ -186,6 +186,15 @@ public abstract class QueryExpression {
         };
     }
 
+    public QueryExpression count() {
+        return new QueryExpression() {
+            @Override
+            public String toString() {
+                return new StringBuilder("COUNT(").append(QueryExpression.this.toString()).append(')').toString(); //$NON-NLS-1$
+            }
+        };
+    }
+
     public QueryExpression max() {
         return new QueryExpression() {
             @Override

@@ -13,9 +13,4 @@ public class SelectOrderByStep extends SelectLimitStep {
         }
         return new SelectLimitStep(getQuery());
     }
-
-    // public SelectLimitStep orderBy(EStructuralFeature feature) {
-    // getQuery().orderBy.add(feature);
-    // return new SelectLimitStep(getQuery());
-    // }
 }

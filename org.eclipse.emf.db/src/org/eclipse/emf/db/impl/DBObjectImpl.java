@@ -341,4 +341,13 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
         else
             return detached.get(ref);
     }
+
+    @Override
+    public String toString() {
+        StringBuffer buf=new StringBuffer();
+        for (org.eclipse.emf.ecore.EStructuralFeature feature : eClass().getEStructuralFeatures()) {
+            buf.append(feature.getName()).append('=').append(eGet(feature)).append('\n');
+        }
+        return buf.toString();
+    }
 }

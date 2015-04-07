@@ -13,8 +13,6 @@ public class SelectFromStep extends SelectFinalStep {
     }
 
     public SelectWhereStep from(EClass clazz) {
-        // getQuery().from=QueryExpression.getTableName(clazz);
-        // return new SelectWhereStep(getQuery());
         return from(new FromExpression(clazz));
     }
 }

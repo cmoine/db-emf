@@ -33,41 +33,35 @@ class SelectQuery {
 
     @Override
     public String toString() {
-        StringBuilder builder=new StringBuilder("SELECT ");
+        StringBuilder builder=new StringBuilder("SELECT "); //$NON-NLS-1$
         append(builder, select.toArray(), ',');
-        builder.append(" FROM ");
+        builder.append(" FROM "); //$NON-NLS-1$
 
-        // if (from != null)
-        // builder.append(from);
-        // else {
-        // Set<EClass> classes=
-        // builder.(inner);
-        // }
         fromExpression.appendPrefix(builder);
         fromExpression.appendSuffix(builder);
 
         if (where != null) {
-            builder.append(" WHERE ");
+            builder.append(" WHERE "); //$NON-NLS-1$
             builder.append(where);
         }
 
         if (!orderBy.isEmpty()) {
-            builder.append(" ORDER BY ");
+            builder.append(" ORDER BY "); //$NON-NLS-1$
             append(builder, orderBy.toArray(), ',');
         }
 
         if (!groupBy.isEmpty()) {
-            builder.append(" GROUP BY ");
+            builder.append(" GROUP BY "); //$NON-NLS-1$
             append(builder, groupBy.toArray(), ',');
         }
 
         if (having != null) {
-            builder.append(" HAVING ");
+            builder.append(" HAVING "); //$NON-NLS-1$
             builder.append(having);
         }
 
         if (limit != null) {
-            builder.append(" LIMIT ");
+            builder.append(" LIMIT "); //$NON-NLS-1$
             if (offset != null)
                 builder.append(offset).append(',');
 

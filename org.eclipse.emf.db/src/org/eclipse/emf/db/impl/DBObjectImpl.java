@@ -344,10 +344,18 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
 
     @Override
     public String toString() {
-        StringBuffer buf=new StringBuffer();
-        buf.append("{cdoId:").append(cdoID()).append('\n'); //$NON-NLS-1$
-        for (org.eclipse.emf.ecore.EStructuralFeature feature : eClass().getEAllAttributes()) {
-            buf.append(feature.getName()).append(':').append(eGet(feature)).append('\n');
+        StringBuffer buf=new StringBuffer(eClass().getName()).append('@').append(Integer.toHexString(hashCode()));
+        buf.append("{cdoId:").append(cdoID()).append(','); //$NON-NLS-1$
+        for (org.eclipse.emf.ecore.EStructuralFeature feature : eClass().getEAllStructuralFeatures()) {
+            buf.append(feature.getName()).append(':');
+            Object eGet=eGet(feature);
+            if (feature instanceof EAttribute) {
+                buf.append(eGet);
+            } else if (feature instanceof EReference && eGet != null && feature.getUpperBound() == 1) {
+                DBObject obj=(DBObject) eGet;
+                buf.append(obj.eClass().getName()).append(':').append(obj.cdoID());
+            }
+            buf.append(',');
         }
         buf.append('}');
         return buf.toString();

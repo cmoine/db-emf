@@ -55,23 +55,25 @@ import org.eclipse.emf.ecore.ETypedElement;
 
     @Override
     protected void didAdd(int index, DBObject newObject) {
-        if (opposite != null) {
             DBObject oldOwner=(DBObject) newObject.eGet(opposite);
+        if (oldOwner != owner) {
             if (oldOwner != null)
                 ((DBList) oldOwner.eGet(ref)).remove(newObject);
 
             ((DBObjectImpl) newObject).internalESet(opposite, owner);
-            ((DBObjectImpl) newObject).dbSetModified(opposite);
+            ((DBObjectImpl) newObject).dbSetModified(opposite, oldOwner);
             owner.dbRemoveDetached(ref, newObject);
         }
     }
 
     @Override
     protected void didRemove(int index, DBObject oldObject) {
-        if (opposite != null) {
+        DBObjectImpl oldOwner=(DBObjectImpl) oldObject.eGet(opposite);
             ((DBObjectImpl) oldObject).internalESet(opposite, null);
-            ((DBObjectImpl) oldObject).dbSetModified(opposite);
+        ((DBObjectImpl) oldObject).dbSetModified(opposite, oldOwner);
             owner.dbAddDetached(ref, oldObject);
+        if (oldOwner != null) {
+            oldOwner.dbAddDetached(opposite, oldObject);
         }
     }
 

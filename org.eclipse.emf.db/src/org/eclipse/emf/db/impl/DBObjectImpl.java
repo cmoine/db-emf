@@ -9,7 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.emf.common.notify.Notification;
+import org.eclipse.emf.common.util.BasicEList;
+import org.eclipse.emf.common.util.EList;
+import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.db.DBObject;
 import org.eclipse.emf.db.RemoteException;
 import org.eclipse.emf.db.util.DBModelInformationCache;
@@ -28,6 +32,7 @@ import org.eclipse.emf.ecore.impl.EObjectImpl;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 
@@ -37,9 +42,42 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
     private String cdoResource;
     private long cdoRevision=0;
     private final Map<EStructuralFeature, Object> map;
+    private Map<EStructuralFeature, Object> ori;
     private Multimap<EReference, DBObject> detached;
     private final EReference containmentRef;
-    private boolean isModified=true;
+
+    protected class DBPropertiesHolderImpl extends EPropertiesHolderBaseImpl {
+        @Override
+        public URI getEProxyURI() {
+            return null;
+        }
+
+        @Override
+        public boolean hasSettings() {
+            return true;
+        }
+
+        @Override
+        public void allocateSettings(int dynamicFeatureCount) {
+            // NO-OP
+        }
+
+        @Override
+        public Object dynamicGet(int dynamicFeatureID) {
+            return eGet(eClass.getEStructuralFeature(dynamicFeatureID));
+        }
+
+        @Override
+        public void dynamicSet(int dynamicFeatureID, Object value) {
+            eSet(eClass.getEStructuralFeature(dynamicFeatureID), value);
+        }
+
+        @Override
+        public void dynamicUnset(int dynamicFeatureID) {
+            throw new UnsupportedOperationException();
+        }
+    }
+    // private boolean isModified=true;
 
     protected DBObjectImpl() {
         map=Maps.newHashMapWithExpectedSize(eClass().getEAllStructuralFeatures().size());
@@ -48,6 +86,7 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
         for (EAttribute att : eClass().getEAllAttributes()) {
             internalESet(att, att.getDefaultValue());
         }
+        eSetClass(eStaticClass());
     }
 
     @Override
@@ -89,6 +128,14 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
     }
 
     @Override
+    protected EPropertiesHolder eProperties() {
+        if (eProperties == null) {
+            eProperties=new DBPropertiesHolderImpl();
+        }
+        return eProperties;
+    }
+
+    @Override
     public void cdoSetResource(String cdoResource) {
         this.cdoResource=cdoResource;
     }
@@ -105,7 +152,8 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
                 if (eFeature.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
                     Object value=map().get(eFeature);
                     if (value == null) {
-                        value=queryAll(((EReference) eFeature), eFeature);
+                        // FIXME c'est degueu
+                        value=queryAll((EReference) eFeature, eFeature);
                         value=new DBList((EReference) eFeature, this, (List<DBObject>) value);
                         internalESet(eFeature, value);
                     }
@@ -121,11 +169,11 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
                         }
                         internalESet(eFeature, value=query((LazyLoadingInformation) value));
                     } else if (value == null && ((EReference) eFeature).isContainment() && ((EReference) eFeature).getEOpposite() != null) {
-                        DBList values=queryAll(((EReference) eFeature), eFeature);
+                        DBList values=queryAll((EReference) eFeature, eFeature);
                         if (values.size() > 1)
                             throw new RemoteException("Found multiple values (instead of 1) for " + ((EReference) eFeature).getEOpposite());
 
-                        internalESet(eFeature, value=(values.isEmpty() ? null : values.get(0)));
+                        internalESet(eFeature, value=values.isEmpty() ? null : values.get(0));
                     }
 
                     return value;
@@ -137,6 +185,10 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
                     loadLazyValues();
                     value=map().get(eFeature);
                 }
+                // Workaround for null values
+                if (value == null && eFeature.getEType().getInstanceClass().isPrimitive())
+                    return eFeature.getDefaultValue();
+
                 return value;
             }
         } catch (SQLException e) {
@@ -216,6 +268,8 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
 
     @Override
     public void eSet(EStructuralFeature eFeature, Object newValue) {
+        Assert.isTrue(eFeature.getEContainingClass().isSuperTypeOf(eClass()), //
+                eFeature.getEContainingClass().getName() + " must be a superclass of " + eClass().getName()); //$NON-NLS-1$
         if (map().get(eFeature) == LazyValue.INSTANCE) {
             // No notifications
             internalESet(eFeature, newValue);
@@ -234,7 +288,7 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
                             if (obj != null)
                                 ((List<?>) obj.eGet(opposite)).remove(this);
                         } else {
-                            List<Object> list=((List<Object>) ((EObject) newValue).eGet(opposite));
+                            List<Object> list=(List<Object>) ((EObject) newValue).eGet(opposite);
                             if (!list.contains(this))
                                 list.add(this);
                         }
@@ -273,7 +327,7 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
             internalESet(eFeature, newValue);
             if (!Objects.equal(oldValue, newValue)) {
                 eNotify(new ENotificationImpl(this, Notification.SET, eFeature, oldValue, newValue));
-                dbSetModified(eFeature);
+                dbSetModified(eFeature, oldValue);
             }
         }
     }
@@ -297,28 +351,54 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
         return map;
     }
 
+    public Map<EStructuralFeature, Object> ori() {
+        return ori;
+    }
+
     @Override
     protected final Object clone() throws CloneNotSupportedException {
         throw new CloneNotSupportedException();
     }
 
+    // @Override
+    // public boolean dbIsModified() {
+    // return isModified;
+    // }
+
     @Override
     public boolean dbIsModified() {
-        return isModified;
+        return ori != null && !ori.isEmpty();
     }
 
-    public void dbSetModified(EStructuralFeature feature) {
-        isModified=true;
+    public void dbSetModified(EStructuralFeature feature, Object oldValue) {
+        if (ori == null || !ori.containsKey(feature)) {
+            ori=Maps.newHashMapWithExpectedSize(eClass().getEAllStructuralFeatures().size());
+            ori.put(feature, oldValue);
+        }
     }
 
     public void dbClearModified() {
-        isModified=false;
+        if (ori != null)
+            ori.clear();
     }
+
+    //
+    // public void dbSetModified(EStructuralFeature feature) {
+    // isModified=true;
+    // }
+    //
+    // public void dbClearModified() {
+    // isModified=false;
+    // }
 
     public void dbAddDetached(EReference ref, DBObject obj) {
         if (DBUtil.isStoredInMemory(obj))
             return; // NO-OP
 
+        dbForceAddDetached(ref, obj);
+    }
+
+    public void dbForceAddDetached(EReference ref, DBObject obj) {
         if (detached == null)
             detached=HashMultimap.create();
         detached.put(ref, obj);
@@ -334,22 +414,53 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
             detached.clear();
     }
 
-    @Override
-    public Collection<DBObject> dbDetached(EReference ref) {
-        if (detached == null)
-            return Collections.emptyList();
-        else
-            return detached.get(ref);
-    }
+    // @Override
+    // public Collection<DBObject> dbDetached(EReference ref) {
+    // if (detached == null)
+    // return Collections.emptyList();
+    // else
+    // return detached.get(ref);
+    // }
 
     @Override
     public String toString() {
-        StringBuffer buf=new StringBuffer();
-        buf.append("{cdoId:").append(cdoID()).append('\n'); //$NON-NLS-1$
-        for (org.eclipse.emf.ecore.EStructuralFeature feature : eClass().getEAllAttributes()) {
-            buf.append(feature.getName()).append(':').append(eGet(feature)).append('\n');
+        StringBuffer buf=new StringBuffer(eClass().getName()).append('@').append(Integer.toHexString(hashCode()));
+        buf.append("{cdoId:").append(cdoID()).append(','); //$NON-NLS-1$
+        for (org.eclipse.emf.ecore.EStructuralFeature feature : eClass().getEAllStructuralFeatures()) {
+            buf.append(feature.getName()).append(':');
+            Object eGet=eGet(feature);
+            if (feature instanceof EAttribute) {
+                buf.append(eGet);
+            } else if (feature instanceof EReference && eGet != null && feature.getUpperBound() == 1) {
+                DBObject obj=(DBObject) eGet;
+                buf.append(obj.eClass().getName()).append(':').append(obj.cdoID());
+            }
+            buf.append(',');
         }
         buf.append('}');
         return buf.toString();
+    }
+
+    @Override
+    public <T> Iterable<T> dbDetached(EReference ref, Class<T> clazz) {
+        Assert.isTrue(ref.getEType() instanceof EClass, "Reference type must be an eClass"); //$NON-NLS-1$
+        Class<?> instanceClass=((EClass) ref.getEType()).getInstanceClass();
+        Assert.isTrue(clazz.isAssignableFrom(instanceClass), "Class " + instanceClass + " is not assignable from " + clazz); //$NON-NLS-1$ //$NON-NLS-2$
+        if (detached == null)
+            return Collections.emptyList();
+        else
+            return Iterables.filter(detached.get(ref), clazz);
+    }
+
+    @Override
+    public EList<EObject> eContents() {
+        // For Quentine to respect EMF contract
+        EList<EObject> result=new BasicEList<EObject>();
+        for (EReference ref : eClass().getEAllContainments()) {
+            if (ref.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
+                result.addAll((Collection<? extends EObject>) eGet(ref));
+            }
+        }
+        return result;
     }
 }

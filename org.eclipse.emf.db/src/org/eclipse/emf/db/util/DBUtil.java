@@ -48,6 +48,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -474,6 +475,37 @@ public final class DBUtil {
             }
         }
         return resources.inverse().get(resource);
+    }
+
+    public static void reload(DBObject obj, EReference ref) throws SQLException {
+        if (obj != null) {
+            EReference opposite=ref.getEOpposite();
+            if (ref.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
+                List<DBObject> list=(List<DBObject>) obj.eGet(ref);
+
+                for (DBObject object : ImmutableList.<DBObject> copyOf(obj.dbDetached(ref, DBObject.class))) {
+                    list.add(object);
+                }
+
+                for (DBObjectImpl target : ImmutableList.<DBObjectImpl> copyOf(Iterables.filter(list, DBObjectImpl.class))) {
+                    // reload(con, target, opposite);
+                    if (target != null && target.ori() != null) {
+                        DBObject value=(DBObject) target.ori().get(opposite);
+                        target.eSet(opposite, value);
+                        // return true;
+                    }
+                }
+            } else {
+                DBObjectImpl target=(DBObjectImpl) obj;
+                if (opposite != null && opposite.isContainment()) {
+                    reload((DBObject) obj.eGet(ref), opposite);
+                }
+                if (target.ori() != null) {
+                    DBObject value=(DBObject) target.ori().get(ref);
+                    obj.eSet(ref, value);
+                }
+            }
+        }
     }
 
     public static void reload(Connection con, DBObject obj) throws SQLException {

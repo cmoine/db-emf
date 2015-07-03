@@ -1000,13 +1000,4 @@ public final class DBUtil {
     public static Cache<Long, DBObject> getCache() {
         return objects;
     }
-
-    public static <T extends DBObject> T getObjectFromCache(long cdoID, Class<T> c, EPackage pkg) throws SQLException {
-        if (cdoID < 1) {
-            Activator.log(IStatus.WARNING, "DBUtil.getObjectFromCache(..) cdoID < 1 -> return NULL ", null); //$NON-NLS-1$
-            return null;
-        }
-        EClass eClass=DBModelInformationCache.getEClass(pkg, c);
-        return (T) getObjectFromCache(null, eClass, cdoID);        
-    }
 }

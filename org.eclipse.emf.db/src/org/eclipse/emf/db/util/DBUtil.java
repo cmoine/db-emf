@@ -419,7 +419,7 @@ public final class DBUtil {
         return result;
     }
 
-    private static long key(DBObject obj) {
+    public static long key(DBObject obj) {
         return key(obj.eClass(), obj.cdoID());
     }
 
@@ -436,6 +436,10 @@ public final class DBUtil {
     private static void putObjectInCache(DBObject dbObject) {
         long key=key(dbObject);
         objects.put(key, dbObject);
+    }
+    
+    public static DBObject getInCache(long value) {
+        return objects.getIfPresent(value);
     }
 
     private static String getResource(Connection con, Long resourceId) throws SQLException {
@@ -789,6 +793,16 @@ public final class DBUtil {
             }
         }
     }
+    
+    private static void fireDeleted(DBObject obj) {
+        for (IDBListener listener : listeners) {
+            try {
+                listener.deleted(obj);
+            } catch (Throwable t) {
+                Activator.log(IStatus.ERROR, "Internal error while notifying modification", t); //$NON-NLS-1$
+            }
+        }
+    }
 
     private static MyProperties getValuesAsProperties(Statement stmt, final DBObject obj, Collection<EStructuralFeature> features) throws SQLException {
         Connection connection=stmt.getConnection();
@@ -907,6 +921,7 @@ public final class DBUtil {
                 }
             }
 
+            fireDeleted(obj);
             // On desactive l objet
             objects.invalidate(key(obj));
             ((DBObjectImpl) obj).setCdoID(-1);

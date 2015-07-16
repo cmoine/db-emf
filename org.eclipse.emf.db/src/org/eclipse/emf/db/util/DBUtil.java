@@ -513,6 +513,10 @@ public final class DBUtil {
         }
     }
 
+    public static void reload(DBObject obj) throws SQLException {
+        reload(obj.cdoView(), obj);
+    }
+
     public static void reload(Connection con, DBObject obj) throws SQLException {
         reload(con, obj, obj.cdoID());
     }

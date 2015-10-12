@@ -824,6 +824,10 @@ public final class DBUtil {
                     value=value == null ? null : DBQueryUtil.quote(MYSQL_DATE_FORMAT.format((java.util.Date) value));
                 else if (att.getEType().equals(EcorePackage.eINSTANCE.getEByteArray()))
                     value=value == null ? null : "x'" + BaseEncoding.base16().encode((byte[]) value) + '\''; //$NON-NLS-1$ 
+                    // else if (att.getEType().equals(EcorePackage.eINSTANCE.getEDouble()))
+                    // value=Double.toString((Double) value);
+                    // else if (att.getEType().equals(EcorePackage.eINSTANCE.getEFloat()))
+                    // value=Float.toString((Float) value);
 
                 values.setProperty(DBQueryUtil.getColumnName(att), String.valueOf(value));
             }
@@ -865,7 +869,7 @@ public final class DBUtil {
         }
         if (obj.eContainer() != null) {
             DBObject eContainer=((DBObject) obj.eContainer());
-            Assert.isTrue(DBUtil.isStoredInDB(eContainer), "You must commit parent before");
+            Assert.isTrue(DBUtil.isStoredInDB(eContainer), "You must commit parent before"); //$NON-NLS-1$
             values.setProperty(CDODBSchema.ATTRIBUTES_CONTAINER, Long.toString(eContainer.cdoID()));
 
             // TODO CME et QLE

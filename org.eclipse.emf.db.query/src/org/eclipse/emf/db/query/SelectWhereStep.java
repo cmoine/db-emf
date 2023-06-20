@@ -6,9 +6,6 @@ public class SelectWhereStep extends SelectGroupByStep {
         super(query);
     }
 
-    // /* package */SelectWhereStep(EClass clazz) {
-    // this.clazz=clazz;
-    // }
     public SelectGroupByStep where(QueryExpression expression) {
         getQuery().where=expression;
         return new SelectGroupByStep(getQuery());

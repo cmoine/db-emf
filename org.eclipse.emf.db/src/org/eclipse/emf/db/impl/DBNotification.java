@@ -8,5 +8,4 @@ public class DBNotification extends NotificationImpl {
     public DBNotification(int eventType, DBObject notifier, EStructuralFeature feature, Object oldValue, Object newValue) {
         super(eventType, oldValue, newValue);
     }
-
 }

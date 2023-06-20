@@ -45,6 +45,8 @@ import com.google.common.base.Predicate;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -88,6 +90,11 @@ public final class DBUtil {
         objects.invalidateAll();
         // resources.clear();
     }
+
+    // public static void clearObjectCache(DBObject obj) {
+    // objects.invalidateAll(Collections.singleton(obj));
+    // // resources.clear();
+    // }
 
     private static ThreadLocal<Boolean> canSave=new ThreadLocal<Boolean>() {
         @Override
@@ -427,6 +434,10 @@ public final class DBUtil {
         long key=key(dbObject);
         objects.put(key, dbObject);
     }
+    
+    public static DBObject getInCache(long value) {
+        return objects.getIfPresent(value);
+    }
 
     // private static String getResource(Connection con, Long resourceId) throws SQLException {
     // if (!resources.containsKey(resourceId)) {
@@ -467,6 +478,41 @@ public final class DBUtil {
     // }
     // return resources.inverse().get(resource);
     // }
+
+    public static void reload(DBObject obj, EReference ref) throws SQLException {
+        if (obj != null) {
+            EReference opposite=ref.getEOpposite();
+            if (ref.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
+                List<DBObject> list=(List<DBObject>) obj.eGet(ref);
+
+                for (DBObject object : ImmutableList.<DBObject> copyOf(obj.dbDetached(ref, DBObject.class))) {
+                    list.add(object);
+                }
+
+                for (DBObjectImpl target : ImmutableList.<DBObjectImpl> copyOf(Iterables.filter(list, DBObjectImpl.class))) {
+                    // reload(con, target, opposite);
+                    if (target != null && target.ori() != null) {
+                        DBObject value=(DBObject) target.ori().get(opposite);
+                        target.eSet(opposite, value);
+                        // return true;
+                    }
+                }
+            } else {
+                DBObjectImpl target=(DBObjectImpl) obj;
+                if (opposite != null && opposite.isContainment()) {
+                    reload((DBObject) obj.eGet(ref), opposite);
+                }
+                if (target.ori() != null) {
+                    DBObject value=(DBObject) target.ori().get(ref);
+                    obj.eSet(ref, value);
+                }
+            }
+        }
+    }
+
+    public static void reload(DBObject obj) throws SQLException {
+        reload(obj.cdoView(), obj);
+    }
 
     public static void reload(Connection con, DBObject obj) throws SQLException {
         reload(con, obj, obj.cdoID());
@@ -541,6 +587,12 @@ public final class DBUtil {
         }
         // Copy EReferences
         for (EReference ref : obj.eClass().getEAllReferences()) {
+            // if (ref.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
+            // // Resets the reference to allows all clients (connected to the server) to update
+            // // local DBObjects.
+            // ((DBObjectImpl) obj).map().put(ref, null);
+            // }
+            // else
             if (ref.getUpperBound() == 1 /* && !ref.isContainment() */) {
                 // 0..1
                 int columnIndex=findColumnIndex(rSet, mapping, DBQueryUtil.getColumnNameExt(ref));
@@ -752,6 +804,16 @@ public final class DBUtil {
             }
         }
     }
+    
+    private static void fireDeleted(DBObject obj) {
+        for (IDBListener listener : listeners) {
+            try {
+                listener.deleted(obj);
+            } catch (Throwable t) {
+                Activator.log(IStatus.ERROR, "Internal error while notifying modification", t); //$NON-NLS-1$
+            }
+        }
+    }
 
     private static MyProperties getValuesAsProperties(Statement stmt, final DBObject obj, Collection<EStructuralFeature> features) throws SQLException {
         Connection connection=stmt.getConnection();
@@ -769,6 +831,10 @@ public final class DBUtil {
                     value=value == null ? null : DBQueryUtil.quote(MYSQL_DATE_FORMAT.format((java.util.Date) value));
                 else if (att.getEType().equals(EcorePackage.eINSTANCE.getEByteArray()))
                     value=value == null ? null : "x'" + BaseEncoding.base16().encode((byte[]) value) + '\''; //$NON-NLS-1$ 
+                    // else if (att.getEType().equals(EcorePackage.eINSTANCE.getEDouble()))
+                    // value=Double.toString((Double) value);
+                    // else if (att.getEType().equals(EcorePackage.eINSTANCE.getEFloat()))
+                    // value=Float.toString((Float) value);
 
                 values.setProperty(DBQueryUtil.getColumnName(att), String.valueOf(value));
             }
@@ -786,20 +852,31 @@ public final class DBUtil {
         }
         long newRevision=System.currentTimeMillis();
         values.setProperty(CDODBSchema.ATTRIBUTES_CREATED, Long.toString(newRevision));
-        // if (obj.cdoResource() != null) {
-        // Long res=getResourceId(connection, obj.cdoResource());
-        // if (res == null) {
-        // stmt.executeUpdate("INSERT INTO cdoresource (name) VALUES ('" + obj.cdoResource() + "')", Statement.RETURN_GENERATED_KEYS);
-        // ResultSet generatedKeys=stmt.getGeneratedKeys();
-        // generatedKeys.next();
-        // res=generatedKeys.getLong(1);
-        // resources.put(res, obj.cdoResource());
-        // }
-        // values.setProperty(CDODBSchema.ATTRIBUTES_RESOURCE, Long.toString(res));
-        // }
+        if (obj.cdoResource() != null) {
+            Long res=getResourceId(connection, obj.cdoResource());
+            if (res == null) {
+                try {
+                    stmt.executeUpdate("INSERT INTO cdoresource (name) VALUES ('" + obj.cdoResource() + "')", Statement.RETURN_GENERATED_KEYS); //$NON-NLS-1$ //$NON-NLS-2$
+                    ResultSet generatedKeys=stmt.getGeneratedKeys();
+                    generatedKeys.next();
+                    res=generatedKeys.getLong(1);
+                } catch (SQLException e) {
+                    ResultSet rSet=stmt.executeQuery("SELECT max(cdo_id) FROM cdoresource"); //$NON-NLS-1$
+                    if (rSet.next()) {
+                        long newCdoId=(rSet.getLong(1) + 1);
+                        String sql="INSERT INTO cdoresource (cdo_id, name, cdo_version, cdo_created, cdo_revised, cdo_resource, cdo_container, cdo_feature) VALUES ('" //$NON-NLS-1$
+                                + newCdoId + "', '" + obj.cdoResource() + "', '1', '" + newRevision + "', '0', '0', '0', '0')"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        stmt.executeUpdate(sql);
+                        res=newCdoId;
+                    }
+                }
+                resources.put(res, obj.cdoResource());
+            }
+            values.setProperty(CDODBSchema.ATTRIBUTES_RESOURCE, Long.toString(res));
+        }
         if (obj.eContainer() != null) {
             DBObject eContainer=((DBObject) obj.eContainer());
-            Assert.isTrue(DBUtil.isStoredInDB(eContainer), "You must commit parent before");
+            Assert.isTrue(DBUtil.isStoredInDB(eContainer), "You must commit parent before"); //$NON-NLS-1$
             values.setProperty(CDODBSchema.ATTRIBUTES_CONTAINER, Long.toString(eContainer.cdoID()));
 
             // TODO CME et QLE

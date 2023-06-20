@@ -89,7 +89,7 @@ public abstract class DBRunnable {
             for (DBObject childDBObject : Iterables.filter(values, DBObject.class))
                 saveDeep(childDBObject, deep - 1);
 
-            for (DBObject childDBObject : dbObject.dbDetached(ref))
+            for (DBObject childDBObject : dbObject.dbDetached(ref, DBObject.class))
                 delete(childDBObject);
         }
         // CME original code

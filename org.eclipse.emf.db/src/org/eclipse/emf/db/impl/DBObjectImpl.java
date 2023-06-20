@@ -39,7 +39,7 @@ import com.google.common.collect.Multimap;
 public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
     private long cdoID=-1;
     private Connection connection;
-    private String cdoResource;
+    // private String cdoResource;
     private long cdoRevision=0;
     private final Map<EStructuralFeature, Object> map;
     private Map<EStructuralFeature, Object> ori;
@@ -113,10 +113,10 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
         return connection;
     }
 
-    @Override
-    public String cdoResource() {
-        return cdoResource;
-    }
+    // @Override
+    // public String cdoResource() {
+    // return cdoResource;
+    // }
 
     @Override
     public long cdoRevision() {
@@ -450,6 +450,18 @@ public abstract class DBObjectImpl extends EObjectImpl implements DBObject {
             return Collections.emptyList();
         else
             return Iterables.filter(detached.get(ref), clazz);
+    }
+
+    @Override
+    public EList<EObject> eContents() {
+        // For Quentine to respect EMF contract
+        EList<EObject> result=new BasicEList<EObject>();
+        for (EReference ref : eClass().getEAllContainments()) {
+            if (ref.getUpperBound() == ETypedElement.UNBOUNDED_MULTIPLICITY) {
+                result.addAll((Collection<? extends EObject>) eGet(ref));
+            }
+        }
+        return result;
     }
 
     @Override
